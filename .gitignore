@@ -25,3 +25,6 @@
 
 # PlatformIO
 .pio/
+
+# VS Code
+c_cpp_properties.json
