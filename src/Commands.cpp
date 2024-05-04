@@ -5,7 +5,7 @@
 #include "Commands.hpp"
 #include "stepper_control.hpp"
 
-char Commands::COMMAND_ABSOLUTE_POSITION[] = "G90";
+const char Commands::COMMAND_ABSOLUTE_POSITION[] = "G90";
 
 Commands::FloatPoint Commands::current_units;
 Commands::FloatPoint Commands::target_units;
@@ -24,14 +24,14 @@ float Commands::x_units = PARAMETERS_X_STEPS_PER_MM;
 float Commands::y_units = PARAMETERS_Y_STEPS_PER_MM;
 float Commands::z_units = PARAMETERS_Z_STEPS_PER_MM;
 
-boolean abs_mode = false; // 0 = incremental; 1 = absolute
+static boolean abs_mode = false; // 0 = incremental; 1 = absolute
 
 // our feedrate variables.
-float feedrate = 0.0;
-uint32_t feedrate_micros = 0;
+static float feedrate = 0.0;
+static uint32_t feedrate_micros = 0;
 
-char commandString[ COMMAND_MAX_LENGTH ] = { '\0' };
-uint8_t receivedBytes = 0;
+static char commandString[ COMMAND_MAX_LENGTH ] = { '\0' };
+static uint8_t receivedBytes = 0;
 
 /**
  * @brief Check whether a given token is contained within a provided string.
@@ -42,7 +42,7 @@ uint8_t receivedBytes = 0;
  * @return true if the string contains the token. \
  * @return false otherwise.
  */
-static bool StringContains( char token, char *string, size_t stringLength );
+static bool StringContains( char token, const char *string, const size_t stringLength );
 /**
  * @brief Extract the numeric payload following a specified token.
  *
@@ -51,7 +51,7 @@ static bool StringContains( char token, char *string, size_t stringLength );
  * @param stringLength The length of the string.
  * @return double The extracted payload.
  */
-static double ExtractNumericPayload( char token, char *string, size_t stringLength );
+static double ExtractNumericPayload( char token, const char *string, const size_t stringLength );
 
 void Commands::ClearCommandBuffer( void )
 {
@@ -87,12 +87,11 @@ void Commands::ExecuteReceived( void )
 }
 
 // Read the string and execute instructions
-void Commands::Execute( char *command, size_t commandLength )
+void Commands::Execute( const char *command, const size_t commandLength )
 {
 	if ( command == NULL )
 	{
-		command = commandString;
-		commandLength = receivedBytes;
+		// TODO: Something bad!
 	}
 
 	// the character / means delete block... used for comments and stuff.
@@ -293,7 +292,7 @@ void Commands::Execute( char *command, size_t commandLength )
 	//	Serial.println(line, DEC);
 }
 
-static bool StringContains( char token, char *string, size_t stringLength )
+static bool StringContains( char token, const char *string, const size_t stringLength )
 {
 	for ( uint8_t i = 0; i < stringLength; i++ )
 	{
@@ -306,7 +305,7 @@ static bool StringContains( char token, char *string, size_t stringLength )
 	return false;
 }
 
-static double ExtractNumericPayload( char token, char *string, size_t stringLength )
+static double ExtractNumericPayload( char token, const char *string, const size_t stringLength )
 {
 	char extracted[ COMMAND_NUMERIC_PAYLOAD_MAX_LENGTH ] = { '\0' };
 

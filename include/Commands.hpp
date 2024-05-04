@@ -26,7 +26,7 @@ struct FloatPoint
 #define COMMAND_NUMERIC_PAYLOAD_MAX_LENGTH 12
 #define COMMAND_TERMINATOR				   '\n'
 
-extern char COMMAND_ABSOLUTE_POSITION[];
+extern const char COMMAND_ABSOLUTE_POSITION[];
 
 extern FloatPoint current_units;
 extern FloatPoint target_units;
@@ -64,9 +64,9 @@ void ExecuteReceived( void );
  * @brief Execute a provided command.
  *
  * @param command The command to execute.
- * @param commandLength
+ * @param commandLength The length of the command.
  */
-void Execute( char *command, size_t commandLength );
+void Execute( const char *command, const size_t commandLength );
 
 }
 
