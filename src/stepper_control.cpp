@@ -27,23 +27,23 @@ void init_steppers()
 	target_units.y = 0.0;
 	target_units.z = 0.0;
 
-	pinMode(X_STEP_PIN, OUTPUT);
-	pinMode(X_DIR_PIN, OUTPUT);
-	pinMode(X_ENABLE_PIN, OUTPUT);
-	pinMode(X_MIN_PIN, INPUT_PULLUP);
-	pinMode(X_MAX_PIN, INPUT_PULLUP);
+	pinMode(WIRING_X_STEP_PIN, OUTPUT);
+	pinMode(WIRING_X_DIRECTION_PIN, OUTPUT);
+	pinMode(WIRING_X_ENABLE_PIN, OUTPUT);
+	pinMode(WIRING_X_LIMIT_MIN_PIN, INPUT_PULLUP);
+	pinMode(WIRING_X_LIMIT_MAX_PIN, INPUT_PULLUP);
 
-	pinMode(Y_STEP_PIN, OUTPUT);
-	pinMode(Y_DIR_PIN, OUTPUT);
-	pinMode(Y_ENABLE_PIN, OUTPUT);
-	pinMode(Y_MIN_PIN, INPUT_PULLUP);
-	pinMode(Y_MAX_PIN, INPUT_PULLUP);
+	pinMode(WIRING_Y_STEP_PIN, OUTPUT);
+	pinMode(WIRING_Y_DIRECTION_PIN, OUTPUT);
+	pinMode(WIRING_Y_ENABLE_PIN, OUTPUT);
+	pinMode(WIRING_Y_LIMIT_MIN_PIN, INPUT_PULLUP);
+	pinMode(WIRING_Y_LIMIT_MAX_PIN, INPUT_PULLUP);
 
-	pinMode(Z_STEP_PIN, OUTPUT);
-	pinMode(Z_DIR_PIN, OUTPUT);
-	pinMode(Z_ENABLE_PIN, OUTPUT);
-	pinMode(Z_MIN_PIN, INPUT_PULLUP);
-	pinMode(Z_MAX_PIN, INPUT_PULLUP);
+	pinMode(WIRING_Z_STEP_PIN, OUTPUT);
+	pinMode(WIRING_Z_DIRECTION_PIN, OUTPUT);
+	pinMode(WIRING_Z_ENABLE_PIN, OUTPUT);
+	pinMode(WIRING_Z_LIMIT_MIN_PIN, INPUT_PULLUP);
+	pinMode(WIRING_Z_LIMIT_MAX_PIN, INPUT_PULLUP);
 
 	// figure our stuff.
 	calculate_deltas();
@@ -53,8 +53,8 @@ void init_steppers()
 void goto_machine_zero()
 {
 	Serial.println("init");
-	move_to_max(X_MIN_PIN, X_STEP_PIN, X_DIR_PIN, 0);
-	move_to_max(Y_MIN_PIN, Y_STEP_PIN, Y_DIR_PIN, 0);
+	move_to_max(WIRING_X_LIMIT_MIN_PIN, WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, 0);
+	move_to_max(WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, 0);
 	Serial.println("ok");
 }
 
@@ -78,9 +78,9 @@ void move_to_max(int limiter_pin, int stepper_pin, int stepper_dir_pin, int dir)
 void dda_move(long micro_delay)
 {
 	// enable our steppers
-	digitalWrite(X_ENABLE_PIN, HIGH);
-	digitalWrite(Y_ENABLE_PIN, HIGH);
-	digitalWrite(Z_ENABLE_PIN, HIGH);
+	digitalWrite(WIRING_X_ENABLE_PIN, HIGH);
+	digitalWrite(WIRING_Y_ENABLE_PIN, HIGH);
+	digitalWrite(WIRING_Z_ENABLE_PIN, HIGH);
 
 	// figure out our deltas
 	max_delta = max(delta_steps.x, delta_steps.y);
@@ -104,9 +104,9 @@ void dda_move(long micro_delay)
 	// do our DDA line!
 	do
 	{
-		x_can_step = can_step(X_MIN_PIN, X_MAX_PIN, current_steps.x, target_steps.x, x_direction);
-		y_can_step = can_step(Y_MIN_PIN, Y_MAX_PIN, current_steps.y, target_steps.y, y_direction);
-		z_can_step = can_step(Z_MIN_PIN, Z_MAX_PIN, current_steps.z, target_steps.z, z_direction);
+		x_can_step = can_step(WIRING_X_LIMIT_MIN_PIN, WIRING_X_LIMIT_MAX_PIN, current_steps.x, target_steps.x, x_direction);
+		y_can_step = can_step(WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_LIMIT_MAX_PIN, current_steps.y, target_steps.y, y_direction);
+		z_can_step = can_step(WIRING_Z_LIMIT_MIN_PIN, WIRING_Z_LIMIT_MAX_PIN, current_steps.z, target_steps.z, z_direction);
 
 		if (x_can_step)
 		{
@@ -114,7 +114,7 @@ void dda_move(long micro_delay)
 
 			if (x_counter > 0)
 			{
-				do_step(X_STEP_PIN, X_DIR_PIN, x_direction);
+				do_step(WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, x_direction);
 				x_counter -= max_delta;
 
 				if (x_direction)
@@ -130,7 +130,7 @@ void dda_move(long micro_delay)
 
 			if (y_counter > 0)
 			{
-				do_step(Y_STEP_PIN, Y_DIR_PIN, y_direction);
+				do_step(WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, y_direction);
 				y_counter -= max_delta;
 
 				if (y_direction)
@@ -146,9 +146,9 @@ void dda_move(long micro_delay)
 
 			if (z_counter > 0)
 			{
-				if (Z_ENABLE_SERVO == 0)
+				if (WIRING_Z_AXIS_SUPPORTED == 0)
 				{
-					do_step(Z_STEP_PIN, Z_DIR_PIN, z_direction);
+					do_step(WIRING_Z_STEP_PIN, WIRING_Z_DIRECTION_PIN, z_direction);
 				}
 				z_counter -= max_delta;
 
@@ -217,7 +217,7 @@ bool read_switch(byte pin)
 {
 	// dual read as crude debounce
 
-	if (SENSORS_INVERTING)
+	if (PARAMETERS_LIMIT_SWITCHES_ACTIVE_LOW)
 		return !digitalRead(pin) && !digitalRead(pin);
 	else
 		return digitalRead(pin) && digitalRead(pin);
@@ -272,9 +272,9 @@ void calculate_deltas()
 	z_direction = (target_units.z >= current_units.z);
 
 	// set our direction pins as well
-	digitalWrite(X_DIR_PIN, x_direction);
-	digitalWrite(Y_DIR_PIN, y_direction);
-	digitalWrite(Z_DIR_PIN, z_direction);
+	digitalWrite(WIRING_X_DIRECTION_PIN, x_direction);
+	digitalWrite(WIRING_Y_DIRECTION_PIN, y_direction);
+	digitalWrite(WIRING_Z_DIRECTION_PIN, z_direction);
 }
 
 long calculate_feedrate_delay(float feedrate)
@@ -310,15 +310,15 @@ long calculate_feedrate_delay(float feedrate)
 long getMaxSpeed()
 {
 	if (delta_steps.z > 0)
-		return calculate_feedrate_delay(FAST_Z_FEEDRATE);
+		return calculate_feedrate_delay(PARAMETERS_MAX_Z_RATE);
 	else
-		return calculate_feedrate_delay(FAST_XY_FEEDRATE);
+		return calculate_feedrate_delay(PARAMETERS_MAX_XY_RATE);
 }
 
 void disable_steppers()
 {
 	// enable our steppers
-	digitalWrite(X_ENABLE_PIN, LOW);
-	digitalWrite(Y_ENABLE_PIN, LOW);
-	digitalWrite(Z_ENABLE_PIN, LOW);
+	digitalWrite(WIRING_X_ENABLE_PIN, LOW);
+	digitalWrite(WIRING_Y_ENABLE_PIN, LOW);
+	digitalWrite(WIRING_Z_ENABLE_PIN, LOW);
 }

@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <Servo.h>
 
 #include "common.h"
 #include "process_string.hpp"
@@ -18,12 +17,14 @@ byte x_direction = 1;
 byte y_direction = 1;
 byte z_direction = 1;
 
-float x_units = X_STEPS_PER_MM;
-float y_units = Y_STEPS_PER_MM;
-float z_units = Z_STEPS_PER_MM;
-float curve_section = CURVE_SECTION_MM;
+float x_units = PARAMETERS_X_STEPS_PER_MM;
+float y_units = PARAMETERS_Y_STEPS_PER_MM;
+float z_units = PARAMETERS_Z_STEPS_PER_MM;
 
 boolean abs_mode = false; // 0 = incremental; 1 = absolute
+
+char commands[COMMAND_SIZE] = { NULL };
+uint8_t serial_count = 0;
 
 // default to inches for units
 void init_process_string()
@@ -95,7 +96,6 @@ void process_string(char instruction[], int size)
 				fp.z = search_string('Z', instruction, size) + current_units.z;
 			}
 
-			targetPosServo = fp.z;
 			break;
 		}
 		// do something!
@@ -108,7 +108,6 @@ void process_string(char instruction[], int size)
 		case 1:
 			// set our target.
 			set_target(fp.x, fp.y, fp.z);
-			servo.write(targetPosServo);
 			// do we have a set speed?
 			if (has_command('G', instruction, size))
 			{
@@ -207,26 +206,6 @@ void process_string(char instruction[], int size)
 			delay((int)search_string('P', instruction, size));
 			break;
 
-		// Inches for Units
-		case 20:
-			x_units = X_STEPS_PER_INCH;
-			y_units = Y_STEPS_PER_INCH;
-			z_units = Z_STEPS_PER_INCH;
-			curve_section = CURVE_SECTION_INCHES;
-
-			calculate_deltas();
-			break;
-
-		// mm for Units
-		case 21:
-			x_units = X_STEPS_PER_MM;
-			y_units = Y_STEPS_PER_MM;
-			z_units = Z_STEPS_PER_MM;
-			curve_section = CURVE_SECTION_MM;
-
-			calculate_deltas();
-			break;
-
 		// go home.
 		case 28:
 			set_target(0.0, 0.0, 0.0);
@@ -308,152 +287,6 @@ void process_string(char instruction[], int size)
 		default:
 			Serial.print("Huh? M");
 			Serial.println(code);
-		}
-	}
-	if (has_command('$', instruction, size))
-	{
-
-		code = search_string('$', instruction, size);
-		switch (code)
-		{
-		case 1:
-			// set XYZ STEP PIN
-			if (has_command('X', instruction, size))
-			{
-				X_STEP_PIN = search_string('X', instruction, size);
-				pinMode(X_STEP_PIN, OUTPUT);
-				digitalWrite(X_STEP_PIN, LOW);
-			}
-			if (has_command('Y', instruction, size))
-			{
-				Y_STEP_PIN = search_string('Y', instruction, size);
-				pinMode(Y_STEP_PIN, OUTPUT);
-				digitalWrite(Y_STEP_PIN, LOW);
-			}
-			if (has_command('Z', instruction, size))
-			{
-				int TEMP_PIN = search_string('Z', instruction, size);
-
-				if (Z_STEP_PIN != TEMP_PIN)
-				{
-					Z_STEP_PIN = TEMP_PIN;
-					if (Z_ENABLE_SERVO == 1)
-					{
-						servo.attach(Z_STEP_PIN);
-					}
-					else
-					{
-						pinMode(Z_STEP_PIN, OUTPUT);
-						digitalWrite(Z_STEP_PIN, LOW);
-					}
-				}
-			}
-			break;
-		case 2:
-			// set XYZ DIR PIN
-			if (has_command('X', instruction, size))
-			{
-				X_DIR_PIN = search_string('X', instruction, size);
-				pinMode(X_DIR_PIN, OUTPUT);
-				digitalWrite(X_DIR_PIN, LOW);
-			}
-			if (has_command('Y', instruction, size))
-			{
-				Y_DIR_PIN = search_string('Y', instruction, size);
-				pinMode(Y_DIR_PIN, OUTPUT);
-				digitalWrite(Y_DIR_PIN, LOW);
-			}
-			if (has_command('Z', instruction, size))
-			{
-				Z_DIR_PIN = search_string('Z', instruction, size);
-				pinMode(Z_DIR_PIN, OUTPUT);
-				digitalWrite(Z_DIR_PIN, LOW);
-			}
-			break;
-		case 3:
-			// set XYZ Min PIN
-			if (has_command('X', instruction, size))
-			{
-				X_MIN_PIN = search_string('X', instruction, size);
-				pinMode(X_MIN_PIN, INPUT_PULLUP);
-			}
-			if (has_command('Y', instruction, size))
-			{
-				Y_MIN_PIN = search_string('Y', instruction, size);
-				pinMode(Y_MIN_PIN, INPUT_PULLUP);
-			}
-			if (has_command('Z', instruction, size))
-			{
-				Z_MIN_PIN = search_string('Z', instruction, size);
-				pinMode(Z_MIN_PIN, INPUT_PULLUP);
-			}
-			break;
-		case 4:
-			// set XYZ Max PIN
-			if (has_command('X', instruction, size))
-			{
-				X_MAX_PIN = search_string('X', instruction, size);
-				pinMode(X_MAX_PIN, INPUT_PULLUP);
-			}
-			if (has_command('Y', instruction, size))
-			{
-				Y_MAX_PIN = search_string('Y', instruction, size);
-				pinMode(Y_MAX_PIN, INPUT_PULLUP);
-			}
-			if (has_command('Z', instruction, size))
-			{
-				Z_MAX_PIN = search_string('Z', instruction, size);
-				pinMode(Z_MAX_PIN, INPUT_PULLUP);
-			}
-			break;
-		case 5:
-			// ENABLE SERVO MOTOR FOR Z
-			if (has_command('Z', instruction, size))
-			{
-				Z_ENABLE_SERVO = search_string('Z', instruction, size);
-			}
-			break;
-		case 6:
-			// set XYZ STEPS PER MM
-			if (has_command('X', instruction, size))
-			{
-				X_STEPS_PER_MM = search_string('X', instruction, size);
-				x_units = X_STEPS_PER_MM;
-				Serial.println(x_units);
-			}
-			if (has_command('Y', instruction, size))
-			{
-				Y_STEPS_PER_MM = search_string('Y', instruction, size);
-				y_units = Y_STEPS_PER_MM;
-			}
-			if (has_command('Z', instruction, size))
-			{
-				Z_STEPS_PER_MM = search_string('Z', instruction, size);
-				z_units = Z_STEPS_PER_MM;
-			}
-			break;
-		case 7:
-			// set XYZ FEEDRATE
-			if (has_command('X', instruction, size))
-			{
-				FAST_XY_FEEDRATE = search_string('X', instruction, size);
-			}
-			else if (has_command('Y', instruction, size))
-			{
-				FAST_XY_FEEDRATE = search_string('Y', instruction, size);
-			}
-			if (has_command('Z', instruction, size))
-			{
-				FAST_Z_FEEDRATE = search_string('Z', instruction, size);
-			}
-			break;
-		case 8:
-			// set XYZ INVERT LIMIT SWITCH
-			if (has_command('S', instruction, size))
-			{
-				SENSORS_INVERTING = search_string('S', instruction, size);
-			}
-			break;
 		}
 	}
 	// tell our host we're done.
