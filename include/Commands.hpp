@@ -46,7 +46,7 @@ extern float y_units;
 extern float z_units;
 extern float curve_section;
 
-void ClearCommandBuffer(void);
+void ClearCommandBuffer( void );
 
 /**
  * @brief Read a byte from the serial input.
@@ -54,19 +54,19 @@ void ClearCommandBuffer(void);
  * @return true if a complete command has been received. \
  * @return false otherwise.
  */
-bool ReceiveByte(void);
+bool ReceiveByte( void );
 
 /**
  * @brief Execute the received command.
  */
-void ExecuteReceived(void);
+void ExecuteReceived( void );
 /**
  * @brief Execute a provided command.
  *
  * @param command The command to execute.
  * @param commandLength
  */
-void Execute(char *command, size_t commandLength);
+void Execute( char *command, size_t commandLength );
 
 }
 

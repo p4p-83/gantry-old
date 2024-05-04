@@ -7,12 +7,12 @@
 
 void setup()
 {
-	Serial.begin(115200);
+	Serial.begin( 115200 );
 
 	Commands::ClearCommandBuffer();
 	init_steppers();
-	Commands::Execute(Commands::COMMAND_ABSOLUTE_POSITION, strlen(Commands::COMMAND_ABSOLUTE_POSITION));
-	Serial.println("start");
+	Commands::Execute( Commands::COMMAND_ABSOLUTE_POSITION, strlen( Commands::COMMAND_ABSOLUTE_POSITION ) );
+	Serial.println( "start" );
 }
 
 void loop()
@@ -20,7 +20,7 @@ void loop()
 	static uint32_t idleIterations = 0;
 	static bool receivedCompleteCommand = false;
 
-	if (Serial.available() > 0)
+	if ( Serial.available() > 0 )
 	{
 		idleIterations = 0;
 		receivedCompleteCommand = Commands::ReceiveByte();
@@ -28,17 +28,17 @@ void loop()
 	else
 	{
 		idleIterations++;
-		delayMicroseconds(100);
+		delayMicroseconds( 100 );
 
-		if (receivedCompleteCommand)
+		if ( receivedCompleteCommand )
 		{
 			Commands::ExecuteReceived();
 			Commands::ClearCommandBuffer();
 		}
 
-#if (PARAMETERS_SLEEP_IF_IDLE == 1)
+#if ( PARAMETERS_SLEEP_IF_IDLE == 1 )
 		// Turn off steppers if no commands received for too long
-		if (idleIterations >= PARAMETERS_IDLE_ITERATIONS_BEFORE_SLEEP)
+		if ( idleIterations >= PARAMETERS_IDLE_ITERATIONS_BEFORE_SLEEP )
 		{
 			disable_steppers();
 		}
