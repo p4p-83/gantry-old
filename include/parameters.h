@@ -27,4 +27,10 @@
 // TODO: what should this be?
 #define PARAMETERS_LIMIT_SWITCHES_ACTIVE_LOW 1
 
+/*
+ * Idle sleep parameters
+ */
+#define PARAMETERS_SLEEP_IF_IDLE				0
+#define PARAMETERS_IDLE_ITERATIONS_BEFORE_SLEEP 10000
+
 #endif

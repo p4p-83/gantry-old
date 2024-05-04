@@ -1,7 +1,8 @@
 #include <Arduino.h>
 
 #include "common.h"
-#include "process_string.hpp"
+
+#include "Commands.hpp"
 #include "stepper_control.hpp"
 
 // init our variables
@@ -20,12 +21,12 @@ void init_steppers()
 	disable_steppers();
 
 	// init our points.
-	current_units.x = 0.0;
-	current_units.y = 0.0;
-	current_units.z = 0.0;
-	target_units.x = 0.0;
-	target_units.y = 0.0;
-	target_units.z = 0.0;
+	Commands::current_units.x = 0.0;
+	Commands::current_units.y = 0.0;
+	Commands::current_units.z = 0.0;
+	Commands::target_units.x = 0.0;
+	Commands::target_units.y = 0.0;
+	Commands::target_units.z = 0.0;
 
 	pinMode(WIRING_X_STEP_PIN, OUTPUT);
 	pinMode(WIRING_X_DIRECTION_PIN, OUTPUT);
@@ -83,8 +84,8 @@ void dda_move(long micro_delay)
 	digitalWrite(WIRING_Z_ENABLE_PIN, HIGH);
 
 	// figure out our deltas
-	max_delta = max(delta_steps.x, delta_steps.y);
-	max_delta = max(delta_steps.z, max_delta);
+	max_delta = max(Commands::delta_steps.x, Commands::delta_steps.y);
+	max_delta = max(Commands::delta_steps.z, max_delta);
 
 	// init stuff.
 	long x_counter = -max_delta / 2;
@@ -104,58 +105,58 @@ void dda_move(long micro_delay)
 	// do our DDA line!
 	do
 	{
-		x_can_step = can_step(WIRING_X_LIMIT_MIN_PIN, WIRING_X_LIMIT_MAX_PIN, current_steps.x, target_steps.x, x_direction);
-		y_can_step = can_step(WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_LIMIT_MAX_PIN, current_steps.y, target_steps.y, y_direction);
-		z_can_step = can_step(WIRING_Z_LIMIT_MIN_PIN, WIRING_Z_LIMIT_MAX_PIN, current_steps.z, target_steps.z, z_direction);
+		x_can_step = can_step(WIRING_X_LIMIT_MIN_PIN, WIRING_X_LIMIT_MAX_PIN, Commands::current_steps.x, Commands::target_steps.x, Commands::x_direction);
+		y_can_step = can_step(WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_LIMIT_MAX_PIN, Commands::current_steps.y, Commands::target_steps.y, Commands::y_direction);
+		z_can_step = can_step(WIRING_Z_LIMIT_MIN_PIN, WIRING_Z_LIMIT_MAX_PIN, Commands::current_steps.z, Commands::target_steps.z, Commands::z_direction);
 
 		if (x_can_step)
 		{
-			x_counter += delta_steps.x;
+			x_counter += Commands::delta_steps.x;
 
 			if (x_counter > 0)
 			{
-				do_step(WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, x_direction);
+				do_step(WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, Commands::x_direction);
 				x_counter -= max_delta;
 
-				if (x_direction)
-					current_steps.x++;
+				if (Commands::x_direction)
+					Commands::current_steps.x++;
 				else
-					current_steps.x--;
+					Commands::current_steps.x--;
 			}
 		}
 
 		if (y_can_step)
 		{
-			y_counter += delta_steps.y;
+			y_counter += Commands::delta_steps.y;
 
 			if (y_counter > 0)
 			{
-				do_step(WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, y_direction);
+				do_step(WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, Commands::y_direction);
 				y_counter -= max_delta;
 
-				if (y_direction)
-					current_steps.y++;
+				if (Commands::y_direction)
+					Commands::current_steps.y++;
 				else
-					current_steps.y--;
+					Commands::current_steps.y--;
 			}
 		}
 
 		if (z_can_step)
 		{
-			z_counter += delta_steps.z;
+			z_counter += Commands::delta_steps.z;
 
 			if (z_counter > 0)
 			{
 				if (WIRING_Z_AXIS_SUPPORTED == 0)
 				{
-					do_step(WIRING_Z_STEP_PIN, WIRING_Z_DIRECTION_PIN, z_direction);
+					do_step(WIRING_Z_STEP_PIN, WIRING_Z_DIRECTION_PIN, Commands::z_direction);
 				}
 				z_counter -= max_delta;
 
-				if (z_direction)
-					current_steps.z++;
+				if (Commands::z_direction)
+					Commands::current_steps.z++;
 				else
-					current_steps.z--;
+					Commands::current_steps.z--;
 			}
 		}
 
@@ -167,9 +168,9 @@ void dda_move(long micro_delay)
 	} while (x_can_step || y_can_step || z_can_step);
 
 	// set our points to be the same
-	current_units.x = target_units.x;
-	current_units.y = target_units.y;
-	current_units.z = target_units.z;
+	Commands::current_units.x = Commands::target_units.x;
+	Commands::current_units.y = Commands::target_units.y;
+	Commands::current_units.z = Commands::target_units.z;
 	calculate_deltas();
 }
 
@@ -230,18 +231,18 @@ long to_steps(float steps_per_unit, float units)
 
 void set_target(float x, float y, float z)
 {
-	target_units.x = x;
-	target_units.y = y;
-	target_units.z = z;
+	Commands::target_units.x = x;
+	Commands::target_units.y = y;
+	Commands::target_units.z = z;
 
 	calculate_deltas();
 }
 
 void set_position(float x, float y, float z)
 {
-	current_units.x = x;
-	current_units.y = y;
-	current_units.z = z;
+	Commands::current_units.x = x;
+	Commands::current_units.y = y;
+	Commands::current_units.z = z;
 
 	calculate_deltas();
 }
@@ -249,54 +250,54 @@ void set_position(float x, float y, float z)
 void calculate_deltas()
 {
 	// figure our deltas.
-	delta_units.x = abs(target_units.x - current_units.x);
-	delta_units.y = abs(target_units.y - current_units.y);
-	delta_units.z = abs(target_units.z - current_units.z);
+	Commands::delta_units.x = abs(Commands::target_units.x - Commands::current_units.x);
+	Commands::delta_units.y = abs(Commands::target_units.y - Commands::current_units.y);
+	Commands::delta_units.z = abs(Commands::target_units.z - Commands::current_units.z);
 
 	// set our steps current, target, and delta
-	current_steps.x = to_steps(x_units, current_units.x);
-	current_steps.y = to_steps(y_units, current_units.y);
-	current_steps.z = to_steps(z_units, current_units.z);
+	Commands::current_steps.x = to_steps(Commands::x_units, Commands::current_units.x);
+	Commands::current_steps.y = to_steps(Commands::y_units, Commands::current_units.y);
+	Commands::current_steps.z = to_steps(Commands::z_units, Commands::current_units.z);
 
-	target_steps.x = to_steps(x_units, target_units.x);
-	target_steps.y = to_steps(y_units, target_units.y);
-	target_steps.z = to_steps(z_units, target_units.z);
+	Commands::target_steps.x = to_steps(Commands::x_units, Commands::target_units.x);
+	Commands::target_steps.y = to_steps(Commands::y_units, Commands::target_units.y);
+	Commands::target_steps.z = to_steps(Commands::z_units, Commands::target_units.z);
 
-	delta_steps.x = abs(target_steps.x - current_steps.x);
-	delta_steps.y = abs(target_steps.y - current_steps.y);
-	delta_steps.z = abs(target_steps.z - current_steps.z);
+	Commands::delta_steps.x = abs(Commands::target_steps.x - Commands::current_steps.x);
+	Commands::delta_steps.y = abs(Commands::target_steps.y - Commands::current_steps.y);
+	Commands::delta_steps.z = abs(Commands::target_steps.z - Commands::current_steps.z);
 
 	// what is our direction
-	x_direction = (target_units.x >= current_units.x);
-	y_direction = (target_units.y >= current_units.y);
-	z_direction = (target_units.z >= current_units.z);
+	Commands::x_direction = (Commands::target_units.x >= Commands::current_units.x);
+	Commands::y_direction = (Commands::target_units.y >= Commands::current_units.y);
+	Commands::z_direction = (Commands::target_units.z >= Commands::current_units.z);
 
 	// set our direction pins as well
-	digitalWrite(WIRING_X_DIRECTION_PIN, x_direction);
-	digitalWrite(WIRING_Y_DIRECTION_PIN, y_direction);
-	digitalWrite(WIRING_Z_DIRECTION_PIN, z_direction);
+	digitalWrite(WIRING_X_DIRECTION_PIN, Commands::x_direction);
+	digitalWrite(WIRING_Y_DIRECTION_PIN, Commands::y_direction);
+	digitalWrite(WIRING_Z_DIRECTION_PIN, Commands::z_direction);
 }
 
 long calculate_feedrate_delay(float feedrate)
 {
 	// how long is our line length?
-	float distance = sqrt(delta_units.x * delta_units.x + delta_units.y * delta_units.y + delta_units.z * delta_units.z);
+	float distance = sqrt(Commands::delta_units.x * Commands::delta_units.x + Commands::delta_units.y * Commands::delta_units.y + Commands::delta_units.z * Commands::delta_units.z);
 	long master_steps = 0;
 
 	// find the dominant axis.
-	if (delta_steps.x > delta_steps.y)
+	if (Commands::delta_steps.x > Commands::delta_steps.y)
 	{
-		if (delta_steps.z > delta_steps.x)
-			master_steps = delta_steps.z;
+		if (Commands::delta_steps.z > Commands::delta_steps.x)
+			master_steps = Commands::delta_steps.z;
 		else
-			master_steps = delta_steps.x;
+			master_steps = Commands::delta_steps.x;
 	}
 	else
 	{
-		if (delta_steps.z > delta_steps.y)
-			master_steps = delta_steps.z;
+		if (Commands::delta_steps.z > Commands::delta_steps.y)
+			master_steps = Commands::delta_steps.z;
 		else
-			master_steps = delta_steps.y;
+			master_steps = Commands::delta_steps.y;
 	}
 
 	// calculate delay between steps in microseconds.  this is sort of tricky, but not too bad.
@@ -309,7 +310,7 @@ long calculate_feedrate_delay(float feedrate)
 
 long getMaxSpeed()
 {
-	if (delta_steps.z > 0)
+	if (Commands::delta_steps.z > 0)
 		return calculate_feedrate_delay(PARAMETERS_MAX_Z_RATE);
 	else
 		return calculate_feedrate_delay(PARAMETERS_MAX_XY_RATE);
