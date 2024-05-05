@@ -3,7 +3,7 @@
 #include "common.h"
 
 #include "Commands.hpp"
-#include "stepper_control.hpp"
+#include "Steppers.hpp"
 
 const char Commands::COMMAND_ABSOLUTE_POSITION[] = "G90";
 
@@ -15,16 +15,11 @@ Commands::FloatPoint Commands::current_steps;
 Commands::FloatPoint Commands::target_steps;
 Commands::FloatPoint Commands::delta_steps;
 
-// our direction vars
-uint8_t Commands::x_direction = 1;
-uint8_t Commands::y_direction = 1;
-uint8_t Commands::z_direction = 1;
-
 float Commands::x_units = PARAMETERS_X_STEPS_PER_MM;
 float Commands::y_units = PARAMETERS_Y_STEPS_PER_MM;
 float Commands::z_units = PARAMETERS_Z_STEPS_PER_MM;
 
-static boolean abs_mode = false; // 0 = incremental; 1 = absolute
+static bool abs_mode = false; // 0 = incremental; 1 = absolute
 
 // our feedrate variables.
 static float feedrate = 0.0;
@@ -159,7 +154,7 @@ void Commands::Execute( const char *command, const size_t commandLength )
 		case 0:
 		case 1:
 			// set our target.
-			set_target( fp.x, fp.y, fp.z );
+			Steppers::SetTarget( fp.x, fp.y, fp.z );
 			// do we have a set speed?
 			if ( StringContains( 'G', command, commandLength ) )
 			{
@@ -169,28 +164,28 @@ void Commands::Execute( const char *command, const size_t commandLength )
 					// how fast do we move?
 					feedrate = ExtractNumericPayload( 'F', command, commandLength );
 					if ( feedrate > 0 )
-						feedrate_micros = calculate_feedrate_delay( feedrate );
+						feedrate_micros = Steppers::CalculateRateDelayMicroseconds( feedrate );
 					// nope, no feedrate
 					else
-						feedrate_micros = getMaxSpeed();
+						feedrate_micros = Steppers::GetMinRateDelayMicroseconds();
 				}
 				// use our max for normal moves.
 				else
-					feedrate_micros = getMaxSpeed();
+					feedrate_micros = Steppers::GetMinRateDelayMicroseconds();
 			}
 			// nope, just coordinates!
 			else
 			{
 				// do we have a feedrate yet?
 				if ( feedrate > 0 )
-					feedrate_micros = calculate_feedrate_delay( feedrate );
+					feedrate_micros = Steppers::CalculateRateDelayMicroseconds( feedrate );
 				// nope, no feedrate
 				else
-					feedrate_micros = getMaxSpeed();
+					feedrate_micros = Steppers::GetMinRateDelayMicroseconds();
 			}
 
 			// finally move.
-			dda_move( feedrate_micros );
+			Steppers::dda_move( feedrate_micros );
 			break;
 
 		// Dwell
@@ -200,8 +195,8 @@ void Commands::Execute( const char *command, const size_t commandLength )
 
 		// go home.
 		case 28:
-			set_target( 0.0, 0.0, 0.0 );
-			goto_machine_zero();
+			Steppers::SetTarget( 0.0, 0.0, 0.0 );
+			Steppers::MoveToZero();
 			break;
 
 		// go home via an intermediate point.
@@ -220,17 +215,17 @@ void Commands::Execute( const char *command, const size_t commandLength )
 				if ( !StringContains( 'Z', command, commandLength ) )
 					fp.z = current_units.z;
 
-				set_target( fp.x, fp.y, fp.z );
+				Steppers::SetTarget( fp.x, fp.y, fp.z );
 			}
 			else
-				set_target( current_units.x + fp.x, current_units.y + fp.y, current_units.z + fp.z );
+				Steppers::SetTarget( current_units.x + fp.x, current_units.y + fp.y, current_units.z + fp.z );
 
 			// go there.
-			dda_move( getMaxSpeed() );
+			Steppers::dda_move( Steppers::GetMinRateDelayMicroseconds() );
 
 			// go home.
-			set_target( 0.0, 0.0, 0.0 );
-			goto_machine_zero();
+			Steppers::SetTarget( 0.0, 0.0, 0.0 );
+			Steppers::MoveToZero();
 			break;
 
 		// Absolute Positioning
@@ -246,7 +241,7 @@ void Commands::Execute( const char *command, const size_t commandLength )
 
 		// Set as home
 		case 92:
-			set_position( 0.0, 0.0, 0.0 );
+			Steppers::SetPosition( 0.0, 0.0, 0.0 );
 			break;
 
 			/*

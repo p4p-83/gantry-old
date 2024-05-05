@@ -36,11 +36,6 @@ extern FloatPoint current_steps;
 extern FloatPoint target_steps;
 extern FloatPoint delta_steps;
 
-// our direction vars
-extern uint8_t x_direction;
-extern uint8_t y_direction;
-extern uint8_t z_direction;
-
 extern float x_units;
 extern float y_units;
 extern float z_units;

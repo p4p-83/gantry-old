@@ -3,7 +3,7 @@
 #include "common.h"
 
 #include "Commands.hpp"
-#include "stepper_control.hpp"
+#include "Steppers.hpp"
 
 void setup()
 {
@@ -12,7 +12,7 @@ void setup()
 	Commands::ClearCommandBuffer();
 
 	Serial.println( "Initialising steppers..." );
-	init_steppers();
+	Steppers::Initialise();
 
 	Serial.print( "Executing " );
 	Serial.println( Commands::COMMAND_ABSOLUTE_POSITION );
@@ -46,7 +46,7 @@ void loop()
 		// Turn off steppers if no commands received for too long
 		if ( idleIterations >= PARAMETERS_IDLE_ITERATIONS_BEFORE_SLEEP )
 		{
-			disable_steppers();
+			Steppers::Disable();
 		}
 #endif
 	}

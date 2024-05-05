@@ -15,17 +15,16 @@
 #define PARAMETERS_Z_STEPS_PER_MM 40
 
 /*
- * Maximum feedrates
+ * Maximum feed rates
  */
-#define PARAMETERS_MAX_XY_RATE 2000
-#define PARAMETERS_MAX_Z_RATE  2000
+#define PARAMETERS_MAX_XY_MM_PER_SEC 20
+#define PARAMETERS_MAX_Z_MM_PER_SEC	 20
 
 /*
  * Polarity of limit switches
  */
 
-// TODO: what should this be?
-#define PARAMETERS_LIMIT_SWITCHES_ACTIVE_LOW 1
+#define PARAMETERS_LIMIT_SWITCHES_ACTIVE_LOW true
 
 /*
  * Idle sleep parameters
