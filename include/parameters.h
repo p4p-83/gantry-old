@@ -10,15 +10,15 @@
  * Physical steps per millimetre
  */
 
-#define PARAMETERS_X_STEPS_PER_MM 40
-#define PARAMETERS_Y_STEPS_PER_MM 40
-#define PARAMETERS_Z_STEPS_PER_MM 40
+#define PARAMETERS_X_STEPS_PER_MICROMETRE 0.04f
+#define PARAMETERS_Y_STEPS_PER_MICROMETRE 0.04f
+#define PARAMETERS_Z_STEPS_PER_MICROMETRE 0.04f
 
 /*
  * Maximum feed rates
  */
-#define PARAMETERS_MAX_XY_MM_PER_SEC 20
-#define PARAMETERS_MAX_Z_MM_PER_SEC	 20
+#define PARAMETERS_MAX_XY_MM_PER_MIN 20
+#define PARAMETERS_MAX_Z_MM_PER_MIN	 20
 
 /*
  * Polarity of limit switches

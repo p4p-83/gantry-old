@@ -12,9 +12,26 @@ enum class Direction : uint8_t
 	TOWARDS_MAX = 1,
 };
 
-extern Steppers::Direction x_direction;
-extern Steppers::Direction y_direction;
-extern Steppers::Direction z_direction;
+struct Point
+{
+	uint32_t x;
+	uint32_t y;
+	uint32_t z;
+};
+
+// TODO: Make as many of these private as I can...
+// TODO: External API should be through SetCurrentPoint()/SetTargetPoint() ONLY
+extern Steppers::Point currentPointMicrometres;
+extern Steppers::Point targetPointMicrometres;
+extern Steppers::Point deltaMicrometres;
+
+extern Steppers::Point currentPointSteps;
+extern Steppers::Point targetPointSteps;
+extern Steppers::Point deltaSteps;
+
+extern Steppers::Direction xDirection;
+extern Steppers::Direction yDirection;
+extern Steppers::Direction zDirection;
 
 /**
  * @brief Initialise the stepper motors.
@@ -40,45 +57,47 @@ void Disable( void );
 uint32_t GetMinRateDelayMicroseconds( void );
 
 /**
- * @brief Set the current units position of the head.
+ * @brief Set the current point of the head.
  *
- * @param xUnits The current x-axis position of the head in units.
- * @param yUnits The current y-axis position of the head in units.
- * @param zUnits The current z-axis position of the head in units.
+ * @param xMicrometres The current x-axis point of the head in micrometres.
+ * @param yMicrometres The current y-axis point of the head in micrometres.
+ * @param zMicrometres The current z-axis point of the head in micrometres.
  */
-void SetPosition( float xUnits, float yUnits, float zUnits );
+void SetCurrentPoint( uint32_t xMicrometres, uint32_t yMicrometres, uint32_t zMicrometres );
 /**
- * @brief Set the target units position of the head.
+ * @brief Set the target point of the head.
  *
- * @param xUnits The target x-axis position of the head in units.
- * @param yUnits The target y-axis position of the head in units.
- * @param zUnits The target z-axis position of the head in units.
+ * @param xMicrometres The target x-axis point of the head in micrometres.
+ * @param yMicrometres The target y-axis point of the head in micrometres.
+ * @param zMicrometres The target z-axis point of the head in micrometres.
  */
-void SetTarget( float xUnits, float yUnits, float zUnits );
+void SetTargetPoint( uint32_t xMicrometres, uint32_t yMicrometres, uint32_t zMicrometres );
 
 /**
- * @brief Calculate the unit and step deltas between the current and target positions.
+ * @brief Calculate the micrometre and step deltas between the current and target points.
  *
  * @note This function also `digitalWrite()`s the necessary logic level
- * to each stepper's direction pin for translation towards the target position.
+ * to each stepper's direction pin for translation towards the target point.
  *
  */
 void CalculateDeltas( void );
 /**
- * @brief Calculate the delay for which to delay between taking each step
+ * @brief Calculate the delay for which to pause between taking each step
  * to achieve the desired feed rate.
  *
- * @param mmPerSec The desired feed rate in millimetres per second.
+ * @note The unit of distance units per minute is used here to comply with standard G-Code format.
+ *
+ * @param mmPerMinute The desired feed rate in millimetres per minute.
  * @return uint32_t The minimum rate delay in microseconds.
  */
-uint32_t CalculateRateDelayMicroseconds( float mmPerSec );
+uint32_t CalculateRateDelayMicroseconds( uint32_t mmPerMinute );
 
 /**
- * @brief Move to the zero position.
+ * @brief Move to the zero point.
  */
 void MoveToZero( void );
 /**
- * @brief Move to the maximum position (ie hit the limit switch).
+ * @brief Move to the maximum point (ie hit the limit switch).
  *
  * @param limitPin The pin of the limit switch in the target direction.
  * @param stepperPin The stepper pin of the axis in which to move.

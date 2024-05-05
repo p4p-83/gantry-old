@@ -5,25 +5,7 @@
 #include "Commands.hpp"
 #include "Steppers.hpp"
 
-const char Commands::COMMAND_ABSOLUTE_POSITION[] = "G90";
-
-Commands::FloatPoint Commands::current_units;
-Commands::FloatPoint Commands::target_units;
-Commands::FloatPoint Commands::delta_units;
-
-Commands::FloatPoint Commands::current_steps;
-Commands::FloatPoint Commands::target_steps;
-Commands::FloatPoint Commands::delta_steps;
-
-float Commands::x_units = PARAMETERS_X_STEPS_PER_MM;
-float Commands::y_units = PARAMETERS_Y_STEPS_PER_MM;
-float Commands::z_units = PARAMETERS_Z_STEPS_PER_MM;
-
-static bool abs_mode = false; // 0 = incremental; 1 = absolute
-
-// our feedrate variables.
-static float feedrate = 0.0;
-static uint32_t feedrate_micros = 0;
+const char Commands::COMMAND_ABSOLUTE_POSITION_MODE[] = "G90";
 
 static char commandString[ COMMAND_MAX_LENGTH ] = { '\0' };
 static uint8_t receivedBytes = 0;
@@ -64,7 +46,7 @@ bool Commands::ReceiveByte( void )
 		// TODO: wtf does this CANCEL mean?
 		if ( receivedByte == 0x18 )
 		{
-			Serial.println( "Grbl 1.0" );
+			Serial.println( "Grbl 0" );
 		}
 		else
 		{
@@ -84,9 +66,18 @@ void Commands::ExecuteReceived( void )
 // Read the string and execute instructions
 void Commands::Execute( const char *command, const size_t commandLength )
 {
+	/**
+	 * @brief Whether the system is in incremental (`false`) or absolute (`true`) mode.
+	 */
+	static bool readValuesAsAbsolute = false;
+
+	static uint32_t feedRateUnitsPerSecond = 0;
+	static uint32_t feedRateDelayMicroseconds = 0;
+
 	if ( command == NULL )
 	{
-		// TODO: Something bad!
+		Serial.println( "ERROR: Trying to execute NULL command!" );
+		return;
 	}
 
 	// the character / means delete block... used for comments and stuff.
@@ -97,194 +88,147 @@ void Commands::Execute( const char *command, const size_t commandLength )
 	}
 
 	// init baby!
-	Commands::FloatPoint fp;
-	fp.x = 0.0;
-	fp.y = 0.0;
-	fp.z = 0.0;
+	Steppers::Point targetPoint;
+	targetPoint.x = 0;
+	targetPoint.y = 0;
+	targetPoint.z = 0;
 
 	uint8_t code = 0;
 
-	// did we get a gcode?
+	// Ensure the received command is valid G-Code
 	if ( !StringContains( '$', command, commandLength ) && ( StringContains( 'G', command, commandLength ) || StringContains( 'X', command, commandLength ) || StringContains( 'Y', command, commandLength ) || StringContains( 'Z', command, commandLength ) ) )
 	{
-		// which one?
 		code = ( int ) ExtractNumericPayload( 'G', command, commandLength );
 
-		// Get co-ordinates if required by the code type given
+		/*
+		 * Get co-ordinates if required by the code type given
+		 */
 		switch ( code )
 		{
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-			if ( abs_mode )
-			{
-				// we do it like this to save time. makes curves better.
-				// eg. if only x and y are specified, we dont have to waste time looking up z.
-				if ( StringContains( 'X', command, commandLength ) )
-					fp.x = ExtractNumericPayload( 'X', command, commandLength );
-				else
-					fp.x = current_units.x;
-
-				if ( StringContains( 'Y', command, commandLength ) )
-					fp.y = ExtractNumericPayload( 'Y', command, commandLength );
-				else
-					fp.y = current_units.y;
-
-				if ( StringContains( 'Z', command, commandLength ) )
-					fp.z = ExtractNumericPayload( 'Z', command, commandLength );
-				else
-					fp.z = current_units.z;
-			}
-			else
-			{
-				fp.x = ExtractNumericPayload( 'X', command, commandLength ) + current_units.x;
-				fp.y = ExtractNumericPayload( 'Y', command, commandLength ) + current_units.y;
-				fp.z = ExtractNumericPayload( 'Z', command, commandLength ) + current_units.z;
-			}
-
-			break;
-		}
-		// do something!
-		switch ( code )
-		{
-		// Rapid Positioning
-		// Linear Interpolation
-		// these are basically the same thing.
-		case 0:
-		case 1:
-			// set our target.
-			Steppers::SetTarget( fp.x, fp.y, fp.z );
-			// do we have a set speed?
-			if ( StringContains( 'G', command, commandLength ) )
-			{
-				// adjust if we have a specific feedrate.
-				if ( code == 1 )
+			// Positioning at rapid travel
+			case 0:
+			// Linear interpolation using a feed rate
+			case 1:
+			// Return to reference point through an intermediate point
+			case 30:
+				if ( readValuesAsAbsolute )
 				{
-					// how fast do we move?
-					feedrate = ExtractNumericPayload( 'F', command, commandLength );
-					if ( feedrate > 0 )
-						feedrate_micros = Steppers::CalculateRateDelayMicroseconds( feedrate );
-					// nope, no feedrate
-					else
-						feedrate_micros = Steppers::GetMinRateDelayMicroseconds();
+					targetPoint.x = ( StringContains( 'X', command, commandLength ) )
+						? ExtractNumericPayload( 'X', command, commandLength )
+						: Steppers::currentPointMicrometres.x;
+
+					targetPoint.x = ( StringContains( 'Y', command, commandLength ) )
+						? ExtractNumericPayload( 'Y', command, commandLength )
+						: Steppers::currentPointMicrometres.y;
+
+					targetPoint.z = ( StringContains( 'Z', command, commandLength ) )
+						? ExtractNumericPayload( 'Z', command, commandLength )
+						: Steppers::currentPointMicrometres.z;
 				}
-				// use our max for normal moves.
 				else
-					feedrate_micros = Steppers::GetMinRateDelayMicroseconds();
-			}
-			// nope, just coordinates!
-			else
-			{
-				// do we have a feedrate yet?
-				if ( feedrate > 0 )
-					feedrate_micros = Steppers::CalculateRateDelayMicroseconds( feedrate );
-				// nope, no feedrate
-				else
-					feedrate_micros = Steppers::GetMinRateDelayMicroseconds();
-			}
-
-			// finally move.
-			Steppers::dda_move( feedrate_micros );
-			break;
-
-		// Dwell
-		case 4:
-			delay( ( int ) ExtractNumericPayload( 'P', command, commandLength ) );
-			break;
-
-		// go home.
-		case 28:
-			Steppers::SetTarget( 0.0, 0.0, 0.0 );
-			Steppers::MoveToZero();
-			break;
-
-		// go home via an intermediate point.
-		case 30:
-			fp.x = ExtractNumericPayload( 'X', command, commandLength );
-			fp.y = ExtractNumericPayload( 'Y', command, commandLength );
-			fp.z = ExtractNumericPayload( 'Z', command, commandLength );
-
-			// set our target.
-			if ( abs_mode )
-			{
-				if ( !StringContains( 'X', command, commandLength ) )
-					fp.x = current_units.x;
-				if ( !StringContains( 'Y', command, commandLength ) )
-					fp.y = current_units.y;
-				if ( !StringContains( 'Z', command, commandLength ) )
-					fp.z = current_units.z;
-
-				Steppers::SetTarget( fp.x, fp.y, fp.z );
-			}
-			else
-				Steppers::SetTarget( current_units.x + fp.x, current_units.y + fp.y, current_units.z + fp.z );
-
-			// go there.
-			Steppers::dda_move( Steppers::GetMinRateDelayMicroseconds() );
-
-			// go home.
-			Steppers::SetTarget( 0.0, 0.0, 0.0 );
-			Steppers::MoveToZero();
-			break;
-
-		// Absolute Positioning
-		case 90:
-			abs_mode = true;
-			break;
-
-		// Incremental Positioning
-		case 91:
-			abs_mode = false;
-
-			break;
-
-		// Set as home
-		case 92:
-			Steppers::SetPosition( 0.0, 0.0, 0.0 );
-			break;
-
-			/*
-						//Inverse Time Feed Mode
-						case 93:
-
-						break;  //TODO: add this
-
-						//Feed per Minute Mode
-						case 94:
-
-						break;  //TODO: add this
-			*/
-
-		default:
-			Serial.print( "huh? G" );
-			Serial.println( code, DEC );
+				{
+					// TODO: Steppers::GetCurrentPoint();
+					targetPoint.x = ExtractNumericPayload( 'X', command, commandLength ) + Steppers::currentPointMicrometres.x;
+					targetPoint.y = ExtractNumericPayload( 'Y', command, commandLength ) + Steppers::currentPointMicrometres.y;
+					targetPoint.z = ExtractNumericPayload( 'Z', command, commandLength ) + Steppers::currentPointMicrometres.z;
+				}
+				break;
 		}
-	}
-	if ( StringContains( 'M', command, commandLength ) )
-	{
-		code = ExtractNumericPayload( 'M', command, commandLength );
+
+		/*
+		 * Perform translation
+		 */
 		switch ( code )
 		{
-		// TODO: this is a bug because ExtractNumericPayload returns 0.  gotta fix that.
-		case 0:
-			break;
+			// Positioning at rapid travel
+			// Note that this shares the same handler as for G01; appropriate feed rate logic is implemented
+			case 0:
+			// Linear interpolation using a feed rate
+			case 1:
+				Steppers::SetTargetPoint( targetPoint.x, targetPoint.y, targetPoint.z );
 
-		default:
-			Serial.print( "Huh? M" );
-			Serial.println( code );
+				// Check if a feed rate has been specified
+				if ( StringContains( 'G', command, commandLength ) )
+				{
+					// Linear interpolation using a feed rate
+					if ( code == 1 )
+					{
+						// * G-Code standard format is units per SECOND!
+						feedRateUnitsPerSecond = ExtractNumericPayload( 'F', command, commandLength );
+
+						feedRateDelayMicroseconds = ( feedRateUnitsPerSecond > 0 )
+							? Steppers::CalculateRateDelayMicroseconds( feedRateUnitsPerSecond )
+							: Steppers::GetMinRateDelayMicroseconds();
+					}
+					else
+					{
+						// Use maximum feed rate
+						feedRateDelayMicroseconds = Steppers::GetMinRateDelayMicroseconds();
+					}
+				}
+				else
+				{
+					feedRateDelayMicroseconds = ( feedRateUnitsPerSecond > 0 )
+						? Steppers::CalculateRateDelayMicroseconds( feedRateUnitsPerSecond )
+						: Steppers::GetMinRateDelayMicroseconds();
+				}
+
+				// Perform the movement at the appropriate rate
+				Steppers::dda_move( feedRateDelayMicroseconds );
+				break;
+
+			// Dwell
+			case 4:
+				delay( ( int ) ExtractNumericPayload( 'P', command, commandLength ) );
+				break;
+
+			// Return to reference point
+			case 28:
+				Steppers::SetTargetPoint( 0, 0, 0 );
+				Steppers::MoveToZero();
+				break;
+
+			// Return to reference point through an intermediate point
+			case 30:
+				// Move to the intermediate point
+				Steppers::SetTargetPoint( targetPoint.x, targetPoint.y, targetPoint.z );
+				Steppers::dda_move( Steppers::GetMinRateDelayMicroseconds() );
+
+				// Return to reference point
+				Steppers::SetTargetPoint( 0, 0, 0 );
+				Steppers::MoveToZero();
+				break;
+
+			// Set distance mode absolute
+			case 90:
+				readValuesAsAbsolute = true;
+				break;
+
+			// Set distance mode incremental
+			case 91:
+				readValuesAsAbsolute = false;
+				break;
+
+			// Reposition origin point
+			case 92:
+				Steppers::SetCurrentPoint( 0, 0, 0 );
+				break;
+
+			default:
+				Serial.print( "Unhandled G-Code: " );
+				Serial.println( code, DEC );
+				break;
 		}
 	}
-	// tell our host we're done.
-	if ( code == 0 && commandLength == 1 )
+
+	if ( ( code == 0 ) && ( commandLength == 1 ) )
 	{
-		Serial.println( "start" );
+		Serial.println( "Start" );
 	}
 	else
 	{
-		Serial.println( "ok" );
+		Serial.println( "Done!" );
 	}
-	//	Serial.println(line, DEC);
 }
 
 static bool StringContains( char token, const char *string, const size_t stringLength )

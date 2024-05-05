@@ -15,8 +15,8 @@ void setup()
 	Steppers::Initialise();
 
 	Serial.print( "Executing " );
-	Serial.println( Commands::COMMAND_ABSOLUTE_POSITION );
-	Commands::Execute( Commands::COMMAND_ABSOLUTE_POSITION, strlen( Commands::COMMAND_ABSOLUTE_POSITION ) );
+	Serial.println( Commands::COMMAND_ABSOLUTE_POSITION_MODE );
+	Commands::Execute( Commands::COMMAND_ABSOLUTE_POSITION_MODE, strlen( Commands::COMMAND_ABSOLUTE_POSITION_MODE ) );
 
 	Serial.println( "Completed setup" );
 }

@@ -8,38 +8,11 @@
 namespace Commands
 {
 
-struct LongPoint
-{
-	uint32_t x;
-	uint32_t y;
-	uint32_t z;
-};
-
-struct FloatPoint
-{
-	float x;
-	float y;
-	float z;
-};
-
 #define COMMAND_MAX_LENGTH				   128
 #define COMMAND_NUMERIC_PAYLOAD_MAX_LENGTH 12
 #define COMMAND_TERMINATOR				   '\n'
 
-extern const char COMMAND_ABSOLUTE_POSITION[];
-
-extern FloatPoint current_units;
-extern FloatPoint target_units;
-extern FloatPoint delta_units;
-
-extern FloatPoint current_steps;
-extern FloatPoint target_steps;
-extern FloatPoint delta_steps;
-
-extern float x_units;
-extern float y_units;
-extern float z_units;
-extern float curve_section;
+extern const char COMMAND_ABSOLUTE_POSITION_MODE[];
 
 void ClearCommandBuffer( void );
 
