@@ -19,20 +19,6 @@ struct Point
 	uint32_t z;
 };
 
-// TODO: Make as many of these private as I can...
-// TODO: External API should be through SetCurrentPoint()/SetTargetPoint() ONLY
-extern Steppers::Point currentPointMicrometres;
-extern Steppers::Point targetPointMicrometres;
-extern Steppers::Point deltaMicrometres;
-
-extern Steppers::Point currentPointSteps;
-extern Steppers::Point targetPointSteps;
-extern Steppers::Point deltaSteps;
-
-extern Steppers::Direction xDirection;
-extern Steppers::Direction yDirection;
-extern Steppers::Direction zDirection;
-
 /**
  * @brief Initialise the stepper motors.
  */
@@ -56,6 +42,12 @@ void Disable( void );
  */
 uint32_t GetMinRateDelayMicroseconds( void );
 
+/**
+ * @brief Get the current point of the head.
+ *
+ * @return Steppers::Point The current point in micrometres.
+ */
+Steppers::Point GetCurrentPoint( void );
 /**
  * @brief Set the current point of the head.
  *

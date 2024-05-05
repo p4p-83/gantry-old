@@ -111,26 +111,28 @@ void Commands::Execute( const char *command, const size_t commandLength )
 			case 1:
 			// Return to reference point through an intermediate point
 			case 30:
+				Steppers::Point currentPointMicrometres = Steppers::GetCurrentPoint();
+
 				if ( readValuesAsAbsolute )
 				{
 					targetPoint.x = ( StringContains( 'X', command, commandLength ) )
 						? ExtractNumericPayload( 'X', command, commandLength )
-						: Steppers::currentPointMicrometres.x;
+						: currentPointMicrometres.x;
 
 					targetPoint.x = ( StringContains( 'Y', command, commandLength ) )
 						? ExtractNumericPayload( 'Y', command, commandLength )
-						: Steppers::currentPointMicrometres.y;
+						: currentPointMicrometres.y;
 
 					targetPoint.z = ( StringContains( 'Z', command, commandLength ) )
 						? ExtractNumericPayload( 'Z', command, commandLength )
-						: Steppers::currentPointMicrometres.z;
+						: currentPointMicrometres.z;
 				}
 				else
 				{
 					// TODO: Steppers::GetCurrentPoint();
-					targetPoint.x = ExtractNumericPayload( 'X', command, commandLength ) + Steppers::currentPointMicrometres.x;
-					targetPoint.y = ExtractNumericPayload( 'Y', command, commandLength ) + Steppers::currentPointMicrometres.y;
-					targetPoint.z = ExtractNumericPayload( 'Z', command, commandLength ) + Steppers::currentPointMicrometres.z;
+					targetPoint.x = ExtractNumericPayload( 'X', command, commandLength ) + currentPointMicrometres.x;
+					targetPoint.y = ExtractNumericPayload( 'Y', command, commandLength ) + currentPointMicrometres.y;
+					targetPoint.z = ExtractNumericPayload( 'Z', command, commandLength ) + currentPointMicrometres.z;
 				}
 				break;
 		}

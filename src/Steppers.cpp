@@ -5,17 +5,17 @@
 #include "Commands.hpp"
 #include "Steppers.hpp"
 
-Steppers::Point Steppers::currentPointMicrometres = { 0 };
-Steppers::Point Steppers::targetPointMicrometres = { 0 };
-Steppers::Point Steppers::deltaMicrometres = { 0 };
+static Steppers::Point currentPointMicrometres = { 0 };
+static Steppers::Point targetPointMicrometres = { 0 };
+static Steppers::Point deltaMicrometres = { 0 };
 
-Steppers::Point Steppers::currentPointSteps = { 0 };
-Steppers::Point Steppers::targetPointSteps = { 0 };
-Steppers::Point Steppers::deltaSteps = { 0 };
+static Steppers::Point currentPointSteps = { 0 };
+static Steppers::Point targetPointSteps = { 0 };
+static Steppers::Point deltaSteps = { 0 };
 
-Steppers::Direction Steppers::xDirection = Steppers::Direction::TOWARDS_MAX;
-Steppers::Direction Steppers::yDirection = Steppers::Direction::TOWARDS_MAX;
-Steppers::Direction Steppers::zDirection = Steppers::Direction::TOWARDS_MAX;
+static Steppers::Direction xDirection = Steppers::Direction::TOWARDS_MAX;
+static Steppers::Direction yDirection = Steppers::Direction::TOWARDS_MAX;
+static Steppers::Direction zDirection = Steppers::Direction::TOWARDS_MAX;
 
 /**
  * @brief Convert a unit measurement into step counts.
@@ -95,7 +95,7 @@ void Steppers::Enable( void )
 uint32_t Steppers::GetMinRateDelayMicroseconds( void )
 {
 	// TODO: Nasty. Pass as arg /please/.
-	if ( Steppers::deltaSteps.z > 0 )
+	if ( deltaSteps.z > 0 )
 	{
 		return Steppers::CalculateRateDelayMicroseconds( PARAMETERS_MAX_Z_MM_PER_MIN );
 	}
@@ -105,20 +105,25 @@ uint32_t Steppers::GetMinRateDelayMicroseconds( void )
 	}
 }
 
+Steppers::Point Steppers::GetCurrentPoint( void )
+{
+	return currentPointMicrometres;
+}
+
 void Steppers::SetCurrentPoint( uint32_t xMicrometres, uint32_t yMicrometres, uint32_t zMicrometres )
 {
-	Steppers::currentPointMicrometres.x = xMicrometres;
-	Steppers::currentPointMicrometres.y = yMicrometres;
-	Steppers::currentPointMicrometres.z = zMicrometres;
+	currentPointMicrometres.x = xMicrometres;
+	currentPointMicrometres.y = yMicrometres;
+	currentPointMicrometres.z = zMicrometres;
 
 	Steppers::CalculateDeltas();
 }
 
 void Steppers::SetTargetPoint( uint32_t xMicrometres, uint32_t yMicrometres, uint32_t zMicrometres )
 {
-	Steppers::targetPointMicrometres.x = xMicrometres;
-	Steppers::targetPointMicrometres.y = yMicrometres;
-	Steppers::targetPointMicrometres.z = zMicrometres;
+	targetPointMicrometres.x = xMicrometres;
+	targetPointMicrometres.y = yMicrometres;
+	targetPointMicrometres.z = zMicrometres;
 
 	Steppers::CalculateDeltas();
 }
@@ -128,60 +133,60 @@ void Steppers::CalculateDeltas( void )
 	Serial.println( "Calculating deltas" );
 
 	// Calculate the delta units between the current and target point
-	Steppers::deltaMicrometres.x = abs( Steppers::targetPointMicrometres.x - Steppers::currentPointMicrometres.x );
-	Steppers::deltaMicrometres.y = abs( Steppers::targetPointMicrometres.y - Steppers::currentPointMicrometres.y );
-	Steppers::deltaMicrometres.z = abs( Steppers::targetPointMicrometres.z - Steppers::currentPointMicrometres.z );
+	deltaMicrometres.x = abs( targetPointMicrometres.x - currentPointMicrometres.x );
+	deltaMicrometres.y = abs( targetPointMicrometres.y - currentPointMicrometres.y );
+	deltaMicrometres.z = abs( targetPointMicrometres.z - currentPointMicrometres.z );
 
 	// Convert current units to step counts
-	Steppers::currentPointSteps.x = UnitsToSteps( PARAMETERS_X_STEPS_PER_MICROMETRE, Steppers::currentPointMicrometres.x );
-	Steppers::currentPointSteps.y = UnitsToSteps( PARAMETERS_Y_STEPS_PER_MICROMETRE, Steppers::currentPointMicrometres.y );
-	Steppers::currentPointSteps.z = UnitsToSteps( PARAMETERS_Z_STEPS_PER_MICROMETRE, Steppers::currentPointMicrometres.z );
+	currentPointSteps.x = UnitsToSteps( PARAMETERS_X_STEPS_PER_MICROMETRE, currentPointMicrometres.x );
+	currentPointSteps.y = UnitsToSteps( PARAMETERS_Y_STEPS_PER_MICROMETRE, currentPointMicrometres.y );
+	currentPointSteps.z = UnitsToSteps( PARAMETERS_Z_STEPS_PER_MICROMETRE, currentPointMicrometres.z );
 
 	// Convert target units to step counts
-	Steppers::targetPointSteps.x = UnitsToSteps( PARAMETERS_X_STEPS_PER_MICROMETRE, Steppers::targetPointMicrometres.x );
-	Steppers::targetPointSteps.y = UnitsToSteps( PARAMETERS_Y_STEPS_PER_MICROMETRE, Steppers::targetPointMicrometres.y );
-	Steppers::targetPointSteps.z = UnitsToSteps( PARAMETERS_Z_STEPS_PER_MICROMETRE, Steppers::targetPointMicrometres.z );
+	targetPointSteps.x = UnitsToSteps( PARAMETERS_X_STEPS_PER_MICROMETRE, targetPointMicrometres.x );
+	targetPointSteps.y = UnitsToSteps( PARAMETERS_Y_STEPS_PER_MICROMETRE, targetPointMicrometres.y );
+	targetPointSteps.z = UnitsToSteps( PARAMETERS_Z_STEPS_PER_MICROMETRE, targetPointMicrometres.z );
 
 	// Calculate the delta steps between the current and target point
-	Steppers::deltaSteps.x = abs( Steppers::targetPointSteps.x - Steppers::currentPointSteps.x );
-	Steppers::deltaSteps.y = abs( Steppers::targetPointSteps.y - Steppers::currentPointSteps.y );
-	Steppers::deltaSteps.z = abs( Steppers::targetPointSteps.z - Steppers::currentPointSteps.z );
+	deltaSteps.x = abs( targetPointSteps.x - currentPointSteps.x );
+	deltaSteps.y = abs( targetPointSteps.y - currentPointSteps.y );
+	deltaSteps.z = abs( targetPointSteps.z - currentPointSteps.z );
 
 	// Determine the required direction of travel
-	Steppers::xDirection = ( Steppers::targetPointMicrometres.x >= Steppers::currentPointMicrometres.x )
+	xDirection = ( targetPointMicrometres.x >= currentPointMicrometres.x )
 		? Steppers::Direction::TOWARDS_MAX
 		: Steppers::Direction::TOWARDS_MIN;
-	Steppers::yDirection = ( Steppers::targetPointMicrometres.y >= Steppers::currentPointMicrometres.y )
+	yDirection = ( targetPointMicrometres.y >= currentPointMicrometres.y )
 		? Steppers::Direction::TOWARDS_MAX
 		: Steppers::Direction::TOWARDS_MIN;
-	Steppers::zDirection = ( Steppers::targetPointMicrometres.z >= Steppers::currentPointMicrometres.z )
+	zDirection = ( targetPointMicrometres.z >= currentPointMicrometres.z )
 		? Steppers::Direction::TOWARDS_MAX
 		: Steppers::Direction::TOWARDS_MIN;
 
 	// Set direction pins
-	digitalWrite( WIRING_X_DIRECTION_PIN, ( ( Steppers::xDirection == Steppers::Direction::TOWARDS_MAX ) ? HIGH : LOW ) );
-	digitalWrite( WIRING_Y_DIRECTION_PIN, ( ( Steppers::yDirection == Steppers::Direction::TOWARDS_MAX ) ? HIGH : LOW ) );
-	digitalWrite( WIRING_Z_DIRECTION_PIN, ( ( Steppers::zDirection == Steppers::Direction::TOWARDS_MAX ) ? HIGH : LOW ) );
+	digitalWrite( WIRING_X_DIRECTION_PIN, ( ( xDirection == Steppers::Direction::TOWARDS_MAX ) ? HIGH : LOW ) );
+	digitalWrite( WIRING_Y_DIRECTION_PIN, ( ( yDirection == Steppers::Direction::TOWARDS_MAX ) ? HIGH : LOW ) );
+	digitalWrite( WIRING_Z_DIRECTION_PIN, ( ( zDirection == Steppers::Direction::TOWARDS_MAX ) ? HIGH : LOW ) );
 }
 
 uint32_t Steppers::CalculateRateDelayMicroseconds( uint32_t mmPerMinute )
 {
 	// Calculate line length
-	uint32_t distance = sqrt( ( Steppers::deltaMicrometres.x * Steppers::deltaMicrometres.x ) + ( Steppers::deltaMicrometres.y * Steppers::deltaMicrometres.y ) + ( Steppers::deltaMicrometres.z * Steppers::deltaMicrometres.z ) );
+	uint32_t distance = sqrt( ( deltaMicrometres.x * deltaMicrometres.x ) + ( deltaMicrometres.y * deltaMicrometres.y ) + ( deltaMicrometres.z * deltaMicrometres.z ) );
 	uint32_t masterAxisSteps = 0;
 
 	// Determine the dominant axis
-	if ( Steppers::deltaSteps.x > Steppers::deltaSteps.y )
+	if ( deltaSteps.x > deltaSteps.y )
 	{
-		masterAxisSteps = ( Steppers::deltaSteps.z > Steppers::deltaSteps.x )
-			? Steppers::deltaSteps.z
-			: Steppers::deltaSteps.x;
+		masterAxisSteps = ( deltaSteps.z > deltaSteps.x )
+			? deltaSteps.z
+			: deltaSteps.x;
 	}
 	else
 	{
-		masterAxisSteps = ( Steppers::deltaSteps.z > Steppers::deltaSteps.y )
-			? Steppers::deltaSteps.z
-			: Steppers::deltaSteps.y;
+		masterAxisSteps = ( deltaSteps.z > deltaSteps.y )
+			? deltaSteps.z
+			: deltaSteps.y;
 	}
 
 	/*
@@ -225,13 +230,13 @@ void Steppers::MoveToLimit( uint8_t limitPin, uint8_t stepperPin, uint8_t steppe
 void Steppers::dda_move( long micro_delay )
 {
 	static int milli_delay;
-	static long max_delta;
+	static uint32_t max_delta;
 
 	Steppers::Enable();
 
 	// figure out our deltas
-	max_delta = max( Steppers::deltaSteps.x, Steppers::deltaSteps.y );
-	max_delta = max( Steppers::deltaSteps.z, max_delta );
+	max_delta = max( deltaSteps.x, deltaSteps.y );
+	max_delta = max( deltaSteps.z, max_delta );
 
 	// init stuff.
 	long x_counter = -max_delta / 2;
@@ -251,58 +256,58 @@ void Steppers::dda_move( long micro_delay )
 	// do our DDA line!
 	do
 	{
-		x_can_step = !Steppers::IsTargetReached( Steppers::currentPointSteps.x, Steppers::targetPointSteps.x, Steppers::xDirection, WIRING_X_LIMIT_MIN_PIN, WIRING_X_LIMIT_MAX_PIN );
-		y_can_step = !Steppers::IsTargetReached( Steppers::currentPointSteps.y, Steppers::targetPointSteps.y, Steppers::yDirection, WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_LIMIT_MAX_PIN );
-		z_can_step = !Steppers::IsTargetReached( Steppers::currentPointSteps.z, Steppers::targetPointSteps.z, Steppers::zDirection, WIRING_Z_LIMIT_MIN_PIN, WIRING_Z_LIMIT_MAX_PIN );
+		x_can_step = !Steppers::IsTargetReached( currentPointSteps.x, targetPointSteps.x, xDirection, WIRING_X_LIMIT_MIN_PIN, WIRING_X_LIMIT_MAX_PIN );
+		y_can_step = !Steppers::IsTargetReached( currentPointSteps.y, targetPointSteps.y, yDirection, WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_LIMIT_MAX_PIN );
+		z_can_step = !Steppers::IsTargetReached( currentPointSteps.z, targetPointSteps.z, zDirection, WIRING_Z_LIMIT_MIN_PIN, WIRING_Z_LIMIT_MAX_PIN );
 
 		if ( x_can_step )
 		{
-			x_counter += Steppers::deltaSteps.x;
+			x_counter += deltaSteps.x;
 
 			if ( x_counter > 0 )
 			{
-				DoStep( WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, Steppers::xDirection );
+				DoStep( WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, xDirection );
 				x_counter -= max_delta;
 
-				if ( Steppers::xDirection == Steppers::Direction::TOWARDS_MAX )
-					Steppers::currentPointSteps.x++;
+				if ( xDirection == Steppers::Direction::TOWARDS_MAX )
+					currentPointSteps.x++;
 				else
-					Steppers::currentPointSteps.x--;
+					currentPointSteps.x--;
 			}
 		}
 
 		if ( y_can_step )
 		{
-			y_counter += Steppers::deltaSteps.y;
+			y_counter += deltaSteps.y;
 
 			if ( y_counter > 0 )
 			{
-				DoStep( WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, Steppers::yDirection );
+				DoStep( WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, yDirection );
 				y_counter -= max_delta;
 
-				if ( Steppers::yDirection == Steppers::Direction::TOWARDS_MAX )
-					Steppers::currentPointSteps.y++;
+				if ( yDirection == Steppers::Direction::TOWARDS_MAX )
+					currentPointSteps.y++;
 				else
-					Steppers::currentPointSteps.y--;
+					currentPointSteps.y--;
 			}
 		}
 
 		if ( z_can_step )
 		{
-			z_counter += Steppers::deltaSteps.z;
+			z_counter += deltaSteps.z;
 
 			if ( z_counter > 0 )
 			{
 				if ( WIRING_Z_AXIS_SUPPORTED == 0 )
 				{
-					DoStep( WIRING_Z_STEP_PIN, WIRING_Z_DIRECTION_PIN, Steppers::zDirection );
+					DoStep( WIRING_Z_STEP_PIN, WIRING_Z_DIRECTION_PIN, zDirection );
 				}
 				z_counter -= max_delta;
 
-				if ( Steppers::zDirection == Steppers::Direction::TOWARDS_MAX )
-					Steppers::currentPointSteps.z++;
+				if ( zDirection == Steppers::Direction::TOWARDS_MAX )
+					currentPointSteps.z++;
 				else
-					Steppers::currentPointSteps.z--;
+					currentPointSteps.z--;
 			}
 		}
 
@@ -314,9 +319,9 @@ void Steppers::dda_move( long micro_delay )
 	} while ( x_can_step || y_can_step || z_can_step );
 
 	// set our points to be the same
-	Steppers::currentPointMicrometres.x = Steppers::targetPointMicrometres.x;
-	Steppers::currentPointMicrometres.y = Steppers::targetPointMicrometres.y;
-	Steppers::currentPointMicrometres.z = Steppers::targetPointMicrometres.z;
+	currentPointMicrometres.x = targetPointMicrometres.x;
+	currentPointMicrometres.y = targetPointMicrometres.y;
+	currentPointMicrometres.z = targetPointMicrometres.z;
 	Steppers::CalculateDeltas();
 }
 
