@@ -6,6 +6,16 @@
 namespace Steppers
 {
 
+/**
+ * @brief The maximum delay permitted for use with `delayMicroseconds()`.
+ *
+ * @warning Longer delays must use `delay()` in milliseconds.
+ *
+ * @see https://www.arduino.cc/reference/en/language/functions/time/delaymicroseconds/
+ *
+ */
+#define STEPPERS_MAX_MICROSECOND_DELAY 16383U
+
 enum class Direction : uint8_t
 {
 	TOWARDS_MIN = 0,
@@ -98,13 +108,16 @@ void MoveToZero( void );
  */
 void MoveToLimit( uint8_t limitPin, uint8_t stepperPin, uint8_t stepperDirectionPin, Steppers::Direction direction );
 /**
- * @brief
+ * @brief Move to the target point.
  *
- * @deprecated Unlikely to be needed.
+ * Implements the Digital Differential Analyser algorithm to move to the target.
  *
- * @param micro_delay
+ * TODO: Is there a good reason for this?
+ * @note Use `Steppers::SetTargetPoint()` to set the target point.
+ *
+ * @param rateDelayMicroseconds
  */
-void dda_move( long micro_delay );
+void MoveToPoint( uint32_t rateDelayMicroseconds );
 
 /**
  * @brief Check whether the target step count has been reached, or a limit switch has been depressed.

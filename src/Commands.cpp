@@ -87,11 +87,10 @@ void Commands::Execute( const char *command, const size_t commandLength )
 		return;
 	}
 
-	// init baby!
-	Steppers::Point targetPoint;
-	targetPoint.x = 0;
-	targetPoint.y = 0;
-	targetPoint.z = 0;
+	Steppers::Point targetPointMicrometres;
+	targetPointMicrometres.x = 0;
+	targetPointMicrometres.y = 0;
+	targetPointMicrometres.z = 0;
 
 	uint8_t code = 0;
 
@@ -115,24 +114,23 @@ void Commands::Execute( const char *command, const size_t commandLength )
 
 				if ( readValuesAsAbsolute )
 				{
-					targetPoint.x = ( StringContains( 'X', command, commandLength ) )
+					targetPointMicrometres.x = ( StringContains( 'X', command, commandLength ) )
 						? ExtractNumericPayload( 'X', command, commandLength )
 						: currentPointMicrometres.x;
 
-					targetPoint.x = ( StringContains( 'Y', command, commandLength ) )
+					targetPointMicrometres.x = ( StringContains( 'Y', command, commandLength ) )
 						? ExtractNumericPayload( 'Y', command, commandLength )
 						: currentPointMicrometres.y;
 
-					targetPoint.z = ( StringContains( 'Z', command, commandLength ) )
+					targetPointMicrometres.z = ( StringContains( 'Z', command, commandLength ) )
 						? ExtractNumericPayload( 'Z', command, commandLength )
 						: currentPointMicrometres.z;
 				}
 				else
 				{
-					// TODO: Steppers::GetCurrentPoint();
-					targetPoint.x = ExtractNumericPayload( 'X', command, commandLength ) + currentPointMicrometres.x;
-					targetPoint.y = ExtractNumericPayload( 'Y', command, commandLength ) + currentPointMicrometres.y;
-					targetPoint.z = ExtractNumericPayload( 'Z', command, commandLength ) + currentPointMicrometres.z;
+					targetPointMicrometres.x = ExtractNumericPayload( 'X', command, commandLength ) + currentPointMicrometres.x;
+					targetPointMicrometres.y = ExtractNumericPayload( 'Y', command, commandLength ) + currentPointMicrometres.y;
+					targetPointMicrometres.z = ExtractNumericPayload( 'Z', command, commandLength ) + currentPointMicrometres.z;
 				}
 				break;
 		}
@@ -147,7 +145,7 @@ void Commands::Execute( const char *command, const size_t commandLength )
 			case 0:
 			// Linear interpolation using a feed rate
 			case 1:
-				Steppers::SetTargetPoint( targetPoint.x, targetPoint.y, targetPoint.z );
+				Steppers::SetTargetPoint( targetPointMicrometres.x, targetPointMicrometres.y, targetPointMicrometres.z );
 
 				// Check if a feed rate has been specified
 				if ( StringContains( 'G', command, commandLength ) )
@@ -176,7 +174,7 @@ void Commands::Execute( const char *command, const size_t commandLength )
 				}
 
 				// Perform the movement at the appropriate rate
-				Steppers::dda_move( feedRateDelayMicroseconds );
+				Steppers::MoveToPoint( feedRateDelayMicroseconds );
 				break;
 
 			// Dwell
@@ -193,8 +191,8 @@ void Commands::Execute( const char *command, const size_t commandLength )
 			// Return to reference point through an intermediate point
 			case 30:
 				// Move to the intermediate point
-				Steppers::SetTargetPoint( targetPoint.x, targetPoint.y, targetPoint.z );
-				Steppers::dda_move( Steppers::GetMinRateDelayMicroseconds() );
+				Steppers::SetTargetPoint( targetPointMicrometres.x, targetPointMicrometres.y, targetPointMicrometres.z );
+				Steppers::MoveToPoint( Steppers::GetMinRateDelayMicroseconds() );
 
 				// Return to reference point
 				Steppers::SetTargetPoint( 0, 0, 0 );

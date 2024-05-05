@@ -71,7 +71,6 @@ void Steppers::Initialise( void )
 	Serial.println( "Calculating deltas" );
 	Steppers::CalculateDeltas();
 
-	Steppers::Enable();
 	Steppers::MoveToZero();
 }
 
@@ -227,101 +226,110 @@ void Steppers::MoveToLimit( uint8_t limitPin, uint8_t stepperPin, uint8_t steppe
 	}
 }
 
-void Steppers::dda_move( long micro_delay )
+void Steppers::MoveToPoint( uint32_t rateDelayMicroseconds )
 {
-	static int milli_delay;
-	static uint32_t max_delta;
-
 	Steppers::Enable();
 
-	// figure out our deltas
-	max_delta = max( deltaSteps.x, deltaSteps.y );
-	max_delta = max( deltaSteps.z, max_delta );
+	// Determine the largest delta distance
+	uint32_t maxDeltaSteps = max( max( deltaSteps.x, deltaSteps.y ), deltaSteps.z );
 
-	// init stuff.
-	long x_counter = -max_delta / 2;
-	long y_counter = -max_delta / 2;
-	long z_counter = -max_delta / 2;
+	// TODO: wtf is this doing?
+	int32_t xStepCounter = -maxDeltaSteps / 2;
+	int32_t yStepCounter = -maxDeltaSteps / 2;
+	int32_t zStepCounter = -maxDeltaSteps / 2;
 
-	// our step flags
-	bool x_can_step = 0;
-	bool y_can_step = 0;
-	bool z_can_step = 0;
+	bool xCanStep = false;
+	bool yCanStep = false;
+	bool zCanStep = false;
 
-	if ( micro_delay >= 16383 )
-		milli_delay = micro_delay / 1000;
-	else
-		milli_delay = 0;
+	// Ensure that the required microsecond delay does not exceed precision limit
+	uint32_t rateDelayMilliseconds = ( rateDelayMicroseconds >= STEPPERS_MAX_MICROSECOND_DELAY )
+		? rateDelayMicroseconds / 1000
+		: 0;
 
-	// do our DDA line!
+	// Execute the DDA algorithm
 	do
 	{
-		x_can_step = !Steppers::IsTargetReached( currentPointSteps.x, targetPointSteps.x, xDirection, WIRING_X_LIMIT_MIN_PIN, WIRING_X_LIMIT_MAX_PIN );
-		y_can_step = !Steppers::IsTargetReached( currentPointSteps.y, targetPointSteps.y, yDirection, WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_LIMIT_MAX_PIN );
-		z_can_step = !Steppers::IsTargetReached( currentPointSteps.z, targetPointSteps.z, zDirection, WIRING_Z_LIMIT_MIN_PIN, WIRING_Z_LIMIT_MAX_PIN );
+		xCanStep = !Steppers::IsTargetReached( currentPointSteps.x, targetPointSteps.x, xDirection, WIRING_X_LIMIT_MIN_PIN, WIRING_X_LIMIT_MAX_PIN );
+		yCanStep = !Steppers::IsTargetReached( currentPointSteps.y, targetPointSteps.y, yDirection, WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_LIMIT_MAX_PIN );
+		zCanStep = !Steppers::IsTargetReached( currentPointSteps.z, targetPointSteps.z, zDirection, WIRING_Z_LIMIT_MIN_PIN, WIRING_Z_LIMIT_MAX_PIN );
 
-		if ( x_can_step )
+		if ( xCanStep )
 		{
-			x_counter += deltaSteps.x;
+			xStepCounter += deltaSteps.x;
 
-			if ( x_counter > 0 )
+			if ( xStepCounter > 0 )
 			{
 				DoStep( WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, xDirection );
-				x_counter -= max_delta;
+				xStepCounter -= maxDeltaSteps;
 
 				if ( xDirection == Steppers::Direction::TOWARDS_MAX )
+				{
 					currentPointSteps.x++;
+				}
 				else
+				{
 					currentPointSteps.x--;
+				}
 			}
 		}
 
-		if ( y_can_step )
+		if ( yCanStep )
 		{
-			y_counter += deltaSteps.y;
+			yStepCounter += deltaSteps.y;
 
-			if ( y_counter > 0 )
+			if ( yStepCounter > 0 )
 			{
 				DoStep( WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, yDirection );
-				y_counter -= max_delta;
+				yStepCounter -= maxDeltaSteps;
 
 				if ( yDirection == Steppers::Direction::TOWARDS_MAX )
+				{
 					currentPointSteps.y++;
+				}
 				else
+				{
 					currentPointSteps.y--;
+				}
 			}
 		}
 
-		if ( z_can_step )
+		if ( zCanStep )
 		{
-			z_counter += deltaSteps.z;
+			zStepCounter += deltaSteps.z;
 
-			if ( z_counter > 0 )
+			if ( zStepCounter > 0 )
 			{
-				if ( WIRING_Z_AXIS_SUPPORTED == 0 )
+				if ( WIRING_Z_AXIS_SUPPORTED )
 				{
 					DoStep( WIRING_Z_STEP_PIN, WIRING_Z_DIRECTION_PIN, zDirection );
 				}
-				z_counter -= max_delta;
+				zStepCounter -= maxDeltaSteps;
 
 				if ( zDirection == Steppers::Direction::TOWARDS_MAX )
+				{
 					currentPointSteps.z++;
+				}
 				else
+				{
 					currentPointSteps.z--;
+				}
 			}
 		}
 
-		// wait for next step.
-		if ( milli_delay > 0 )
-			delay( milli_delay );
+		// Delay before taking the next step
+		if ( rateDelayMilliseconds > 0 )
+		{
+			delay( rateDelayMilliseconds );
+		}
 		else
-			delayMicroseconds( micro_delay );
-	} while ( x_can_step || y_can_step || z_can_step );
+		{
+			delayMicroseconds( rateDelayMicroseconds );
+		}
+	} while ( xCanStep || yCanStep || zCanStep );
 
-	// set our points to be the same
-	currentPointMicrometres.x = targetPointMicrometres.x;
-	currentPointMicrometres.y = targetPointMicrometres.y;
-	currentPointMicrometres.z = targetPointMicrometres.z;
+	// Update the current point
+	Steppers::SetCurrentPoint( targetPointMicrometres.x, targetPointMicrometres.y, targetPointMicrometres.z );
 	Steppers::CalculateDeltas();
 }
 
