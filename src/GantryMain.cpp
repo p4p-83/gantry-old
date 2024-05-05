@@ -10,9 +10,15 @@ void setup()
 	Serial.begin( 115200 );
 
 	Commands::ClearCommandBuffer();
+
+	Serial.println( "Initialising steppers..." );
 	init_steppers();
+
+	Serial.print( "Executing " );
+	Serial.println( Commands::COMMAND_ABSOLUTE_POSITION );
 	Commands::Execute( Commands::COMMAND_ABSOLUTE_POSITION, strlen( Commands::COMMAND_ABSOLUTE_POSITION ) );
-	Serial.println( "start" );
+
+	Serial.println( "Completed setup" );
 }
 
 void loop()
