@@ -132,9 +132,11 @@ void Steppers::CalculateDeltas( void )
 	Serial.println( "Calculating deltas" );
 
 	// Calculate the delta units between the current and target point
-	deltaMicrometres.x = abs( targetPointMicrometres.x - currentPointMicrometres.x );
-	deltaMicrometres.y = abs( targetPointMicrometres.y - currentPointMicrometres.y );
-	deltaMicrometres.z = abs( targetPointMicrometres.z - currentPointMicrometres.z );
+	deltaMicrometres.x = abs( ( int32_t ) ( targetPointMicrometres.x - currentPointMicrometres.x ) );
+	deltaMicrometres.y = abs( ( int32_t ) ( targetPointMicrometres.y - currentPointMicrometres.y ) );
+	deltaMicrometres.z = abs( ( int32_t ) ( targetPointMicrometres.z - currentPointMicrometres.z ) );
+
+	Serial.println( deltaMicrometres.x );
 
 	// Convert current units to step counts
 	currentPointSteps.x = UnitsToSteps( PARAMETERS_X_STEPS_PER_MICROMETRE, currentPointMicrometres.x );
@@ -147,9 +149,11 @@ void Steppers::CalculateDeltas( void )
 	targetPointSteps.z = UnitsToSteps( PARAMETERS_Z_STEPS_PER_MICROMETRE, targetPointMicrometres.z );
 
 	// Calculate the delta steps between the current and target point
-	deltaSteps.x = abs( targetPointSteps.x - currentPointSteps.x );
-	deltaSteps.y = abs( targetPointSteps.y - currentPointSteps.y );
-	deltaSteps.z = abs( targetPointSteps.z - currentPointSteps.z );
+	deltaSteps.x = abs( ( int32_t ) ( targetPointSteps.x - currentPointSteps.x ) );
+	deltaSteps.y = abs( ( int32_t ) ( targetPointSteps.y - currentPointSteps.y ) );
+	deltaSteps.z = abs( ( int32_t ) ( targetPointSteps.z - currentPointSteps.z ) );
+
+	Serial.println( deltaSteps.x );
 
 	// Determine the required direction of travel
 	xDirection = ( targetPointMicrometres.x >= currentPointMicrometres.x )
