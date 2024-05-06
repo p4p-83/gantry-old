@@ -211,19 +211,41 @@ void Steppers::MoveToZero( void )
 
 void Steppers::MoveToLimit( uint8_t limitPin, uint8_t stepperPin, uint8_t stepperDirectionPin, Steppers::Direction direction )
 {
+	Serial.println();
 	Serial.print( "Moving towards " );
 	Serial.println( ( ( direction == Steppers::Direction::TOWARDS_MAX ) ? "maximum limit" : "minimum limit" ) );
 	while ( !ReadLimitSwitch( limitPin ) )
 	{
 		DoStep( stepperPin, stepperDirectionPin, direction );
 	}
+	Serial.println( "Hit limit" );
+
+	delay( 250 );
+
+	Serial.print( "Limit switches: " );
+	Serial.print( ReadLimitSwitch( WIRING_X_LIMIT_MIN_PIN ) );
+	Serial.print( ReadLimitSwitch( WIRING_X_LIMIT_MAX_PIN ) );
+	Serial.print( ReadLimitSwitch( WIRING_Y_LIMIT_MIN_PIN ) );
+	Serial.println( ReadLimitSwitch( WIRING_Y_LIMIT_MAX_PIN ) );
 
 	// Slowly reverse until limit switch is released
-	Serial.println( "Reversing" );
+	Steppers::Direction reverseDirection = ( direction == Steppers::Direction::TOWARDS_MAX )
+		? Steppers::Direction::TOWARDS_MIN
+		: Steppers::Direction::TOWARDS_MAX;
+	Serial.print( "Reversing towards " );
+	Serial.println( ( ( reverseDirection == Steppers::Direction::TOWARDS_MAX ) ? "maximum limit" : "minimum limit" ) );
 	while ( ReadLimitSwitch( limitPin ) )
 	{
-		DoStep( stepperPin, stepperDirectionPin, ( ( direction == Steppers::Direction::TOWARDS_MAX ) ? Steppers::Direction::TOWARDS_MIN : Steppers::Direction::TOWARDS_MAX ) );
+		DoStep( stepperPin, stepperDirectionPin, reverseDirection );
 	}
+
+	Serial.print( "Limit switches: " );
+	Serial.print( ReadLimitSwitch( WIRING_X_LIMIT_MIN_PIN ) );
+	Serial.print( ReadLimitSwitch( WIRING_X_LIMIT_MAX_PIN ) );
+	Serial.print( ReadLimitSwitch( WIRING_Y_LIMIT_MIN_PIN ) );
+	Serial.println( ReadLimitSwitch( WIRING_Y_LIMIT_MAX_PIN ) );
+
+	Serial.println( "Done" );
 }
 
 void Steppers::MoveToTarget( uint32_t rateDelayMicroseconds )
