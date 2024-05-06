@@ -364,29 +364,25 @@ void Steppers::MoveToTarget( uint32_t rateDelayMicroseconds )
 
 bool Steppers::IsTargetReached( uint32_t currentSteps, uint32_t targetSteps, Steppers::Direction direction, uint8_t limitMinPin, uint8_t limitMaxPin )
 {
-	// Serial.println( "============" );
-	// Serial.print( "Current steps: " );
-	// Serial.println( currentSteps );
-	// Serial.print( "Target steps: " );
-	// Serial.println( targetSteps );
-	// Serial.print( "Direction: " );
-	// Serial.println( ( direction == Steppers::Direction::TOWARDS_MAX ) ? "TOWARDS_MAX" : "TOWARDS_MIN" );
-	// Serial.println( "============" );
-
 	if ( ( direction == Steppers::Direction::TOWARDS_MIN ) && ( targetSteps >= currentSteps ) )
 	{
-		Serial.println( "Target reached" );
+		// Serial.println( "Target reached (min)" );
 		return true;
 	}
 	else if ( ( direction == Steppers::Direction::TOWARDS_MAX ) && ( targetSteps <= currentSteps ) )
 	{
-		Serial.println( "Target reached" );
+		// Serial.println( "Target reached (max)" );
 		return true;
 	}
 
-	if ( ReadLimitSwitch( limitMinPin ) || ReadLimitSwitch( limitMaxPin ) )
+	if ( ( direction == Steppers::Direction::TOWARDS_MIN ) && ( ReadLimitSwitch( limitMinPin ) ) )
 	{
-		Serial.println( "Limit switch hit" );
+		Serial.println( "Limit switch hit (min)" );
+		return true;
+	}
+	else if ( ( direction == Steppers::Direction::TOWARDS_MAX ) && ( ReadLimitSwitch( limitMaxPin ) ) )
+	{
+		Serial.println( "Limit switch hit (max)" );
 		return true;
 	}
 
