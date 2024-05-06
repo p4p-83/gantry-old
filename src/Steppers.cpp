@@ -249,15 +249,23 @@ void Steppers::MoveToLimit( uint8_t limitPin, uint8_t stepperPin, uint8_t steppe
 
 void Steppers::MoveToTarget( uint32_t rateDelayMicroseconds )
 {
+	Serial.println();
+	Serial.print( "Moving to target: " );
+	Serial.print( targetPointMicrometres.x );
+	Serial.print( "um (x) " );
+	Serial.print( targetPointMicrometres.y );
+	Serial.print( "um (y) " );
+	Serial.print( targetPointMicrometres.z );
+	Serial.println( "um (z)" );
+
 	Steppers::Enable();
 
 	// Determine the largest delta distance
 	uint32_t maxDeltaSteps = max( max( deltaSteps.x, deltaSteps.y ), deltaSteps.z );
 
-	// TODO: wtf is this doing?
-	int32_t xStepCounter = -maxDeltaSteps / 2;
-	int32_t yStepCounter = -maxDeltaSteps / 2;
-	int32_t zStepCounter = -maxDeltaSteps / 2;
+	int32_t xStepCounter = -( maxDeltaSteps / 2 );
+	int32_t yStepCounter = -( maxDeltaSteps / 2 );
+	int32_t zStepCounter = -( maxDeltaSteps / 2 );
 
 	bool xCanStep = false;
 	bool yCanStep = false;
