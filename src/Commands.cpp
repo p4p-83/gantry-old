@@ -174,7 +174,7 @@ void Commands::Execute( const char *command, const size_t commandLength )
 				}
 
 				// Perform the movement at the appropriate rate
-				Steppers::MoveToPoint( feedRateDelayMicroseconds );
+				Steppers::MoveToTarget( feedRateDelayMicroseconds );
 				break;
 
 			// Dwell
@@ -192,7 +192,7 @@ void Commands::Execute( const char *command, const size_t commandLength )
 			case 30:
 				// Move to the intermediate point
 				Steppers::SetTargetPoint( targetPointMicrometres.x, targetPointMicrometres.y, targetPointMicrometres.z );
-				Steppers::MoveToPoint( Steppers::GetMinRateDelayMicroseconds() );
+				Steppers::MoveToTarget( Steppers::GetMinRateDelayMicroseconds() );
 
 				// Return to reference point
 				Steppers::SetTargetPoint( 0, 0, 0 );

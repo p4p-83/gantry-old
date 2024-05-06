@@ -7,6 +7,13 @@ namespace Steppers
 {
 
 /**
+ * @brief The minimum delay permitted for use with `delayMicroseconds()`.
+ *
+ * @see https://www.arduino.cc/reference/en/language/functions/time/delaymicroseconds/
+ *
+ */
+#define STEPPERS_MIN_MICROSECOND_DELAY 3U
+/**
  * @brief The maximum delay permitted for use with `delayMicroseconds()`.
  *
  * @warning Longer delays must use `delay()` in milliseconds.
@@ -117,7 +124,8 @@ void MoveToLimit( uint8_t limitPin, uint8_t stepperPin, uint8_t stepperDirection
  *
  * @param rateDelayMicroseconds
  */
-void MoveToPoint( uint32_t rateDelayMicroseconds );
+// TODO: This should be a rate of distance
+void MoveToTarget( uint32_t rateDelayMicroseconds );
 
 /**
  * @brief Check whether the target step count has been reached, or a limit switch has been depressed.

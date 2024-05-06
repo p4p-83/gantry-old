@@ -226,7 +226,7 @@ void Steppers::MoveToLimit( uint8_t limitPin, uint8_t stepperPin, uint8_t steppe
 	}
 }
 
-void Steppers::MoveToPoint( uint32_t rateDelayMicroseconds )
+void Steppers::MoveToTarget( uint32_t rateDelayMicroseconds )
 {
 	Steppers::Enable();
 
