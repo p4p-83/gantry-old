@@ -200,11 +200,10 @@ void Steppers::MoveToZero( void )
 {
 	Serial.println( "Moving to zero point" );
 
-	Steppers::MoveToLimit( WIRING_X_LIMIT_MAX_PIN, WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, Steppers::Direction::TOWARDS_MAX );
-	Steppers::MoveToLimit( WIRING_Y_LIMIT_MAX_PIN, WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, Steppers::Direction::TOWARDS_MAX );
-
 	Steppers::MoveToLimit( WIRING_X_LIMIT_MIN_PIN, WIRING_X_STEP_PIN, WIRING_X_DIRECTION_PIN, Steppers::Direction::TOWARDS_MIN );
 	Steppers::MoveToLimit( WIRING_Y_LIMIT_MIN_PIN, WIRING_Y_STEP_PIN, WIRING_Y_DIRECTION_PIN, Steppers::Direction::TOWARDS_MIN );
+
+	Steppers::SetCurrentPoint( 0, 0, 0 );
 
 	Serial.println( "Moved to zero point" );
 }
