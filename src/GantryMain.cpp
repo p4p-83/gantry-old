@@ -40,6 +40,7 @@ void loop()
 		{
 			Commands::ExecuteReceived();
 			Commands::ClearCommandBuffer();
+			receivedCompleteCommand = false;
 		}
 
 #if ( PARAMETERS_SLEEP_IF_IDLE == 1 )
