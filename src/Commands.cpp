@@ -133,7 +133,7 @@ void Commands::Execute( const char *command, const size_t commandLength )
 						? ExtractNumericPayload( 'X', command, commandLength )
 						: currentPointMicrometres.x;
 
-					targetPointMicrometres.x = ( StringContains( 'Y', command, commandLength ) )
+					targetPointMicrometres.y = ( StringContains( 'Y', command, commandLength ) )
 						? ExtractNumericPayload( 'Y', command, commandLength )
 						: currentPointMicrometres.y;
 
