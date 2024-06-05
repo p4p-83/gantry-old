@@ -186,6 +186,8 @@ void Steppers::CalculateDeltas( void )
 
 uint32_t Steppers::CalculateRateDelayMicroseconds( uint32_t mmPerMinute )
 {
+	return STEPPERS_MIN_MICROSECOND_DELAY;
+
 	// Calculate line length
 	uint32_t distance = sqrt( ( deltaMicrometres.x * deltaMicrometres.x ) + ( deltaMicrometres.y * deltaMicrometres.y ) + ( deltaMicrometres.z * deltaMicrometres.z ) );
 	uint32_t masterAxisSteps = 0;
