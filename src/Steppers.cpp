@@ -276,6 +276,9 @@ void Steppers::MoveToTarget( uint32_t rateDelayMicroseconds )
 	Serial.print( targetPointMicrometres.z );
 	Serial.println( "um (z)" );
 
+	Serial.print( "Moving with rate delay: " );
+	Serial.println( rateDelayMicroseconds );
+
 	Steppers::Enable();
 
 	// Determine the largest delta distance
