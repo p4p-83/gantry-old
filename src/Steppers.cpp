@@ -136,7 +136,13 @@ void Steppers::CalculateDeltas( void )
 	deltaMicrometres.y = abs( ( int32_t ) ( targetPointMicrometres.y - currentPointMicrometres.y ) );
 	deltaMicrometres.z = abs( ( int32_t ) ( targetPointMicrometres.z - currentPointMicrometres.z ) );
 
-	Serial.println( deltaMicrometres.x );
+	Serial.print( "Delta: " );
+	Serial.print( deltaMicrometres.x );
+	Serial.print( "um (x) " );
+	Serial.print( deltaMicrometres.y );
+	Serial.print( "um (y) " );
+	Serial.print( deltaMicrometres.z );
+	Serial.println( "um (z)" );
 
 	// Convert current units to step counts
 	currentPointSteps.x = UnitsToSteps( PARAMETERS_X_STEPS_PER_MICROMETRE, currentPointMicrometres.x );
@@ -153,7 +159,13 @@ void Steppers::CalculateDeltas( void )
 	deltaSteps.y = abs( ( int32_t ) ( targetPointSteps.y - currentPointSteps.y ) );
 	deltaSteps.z = abs( ( int32_t ) ( targetPointSteps.z - currentPointSteps.z ) );
 
-	Serial.println( deltaSteps.x );
+	Serial.print( "Delta: " );
+	Serial.print( deltaSteps.x );
+	Serial.print( "steps (x) " );
+	Serial.print( deltaSteps.y );
+	Serial.print( "steps (y) " );
+	Serial.print( deltaSteps.z );
+	Serial.println( "steps (z)" );
 
 	// Determine the required direction of travel
 	xDirection = ( targetPointMicrometres.x >= currentPointMicrometres.x )
