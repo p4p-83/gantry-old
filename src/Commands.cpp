@@ -40,18 +40,31 @@ bool Commands::ReceiveByte( void )
 {
 	static char receivedByte;
 	receivedByte = Serial.read();
+	Serial.print( receivedByte );
 
 	if ( receivedByte != COMMAND_TERMINATOR )
 	{
-		// TODO: wtf does this CANCEL mean?
-		if ( receivedByte == 0x18 )
+		switch ( receivedByte )
 		{
-			Serial.println( "Grbl 0" );
-		}
-		else
-		{
-			commandString[ receivedBytes ] = receivedByte;
-			receivedBytes++;
+			// '\b'
+			case 0x08:
+				Serial.print( ' ' );
+				Serial.print( receivedByte );
+				commandString[ receivedBytes-- ] = '\0';
+				break;
+
+			// ⌃x
+			case 0x18:
+				for ( uint8_t i = 0; i <= receivedBytes; i++ )
+				{
+					Serial.print( "\b \b" );
+				}
+				Commands::ClearCommandBuffer();
+				break;
+
+			default:
+				commandString[ receivedBytes++ ] = receivedByte;
+				break;
 		}
 	}
 
@@ -60,6 +73,8 @@ bool Commands::ReceiveByte( void )
 
 void Commands::ExecuteReceived( void )
 {
+	Serial.print( "> " );
+	Serial.println( commandString );
 	Commands::Execute( commandString, receivedBytes );
 }
 
