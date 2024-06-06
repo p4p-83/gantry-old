@@ -190,7 +190,7 @@ void setup()
 	Serial.println( Commands::COMMAND_ABSOLUTE_POSITION_MODE );
 	Commands::Execute( Commands::COMMAND_ABSOLUTE_POSITION_MODE, strlen( Commands::COMMAND_ABSOLUTE_POSITION_MODE ) );
 
-	DrawTestPattern();
+	// DrawTestPattern();
 
 	Serial.println( "Completed setup" );
 }
