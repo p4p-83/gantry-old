@@ -36,6 +36,44 @@ void Commands::ClearCommandBuffer( void )
 	receivedBytes = 0;
 }
 
+void KeyboardApi( char byte )
+{
+	static Steppers::Point currentPointMicrometres;
+	currentPointMicrometres = Steppers::GetCurrentPoint();
+
+	static uint16_t deltaMicrometres = 1000;
+
+	switch ( byte )
+	{
+		case 'k':
+		case 'w':
+		{
+			Steppers::SetTargetPoint( currentPointMicrometres.x - deltaMicrometres, currentPointMicrometres.y, currentPointMicrometres.z );
+			break;
+		}
+		case 'h':
+		case 'a':
+		{
+			Steppers::SetTargetPoint( currentPointMicrometres.x, currentPointMicrometres.y + deltaMicrometres, currentPointMicrometres.z );
+			break;
+		}
+		case 'j':
+		case 's':
+		{
+			Steppers::SetTargetPoint( currentPointMicrometres.x + deltaMicrometres, currentPointMicrometres.y, currentPointMicrometres.z );
+			break;
+		}
+		case 'l':
+		case 'd':
+		{
+			Steppers::SetTargetPoint( currentPointMicrometres.x, currentPointMicrometres.y - deltaMicrometres, currentPointMicrometres.z );
+			break;
+		}
+	}
+
+	Steppers::MoveToTarget( STEPPERS_MIN_MICROSECOND_DELAY );
+}
+
 bool Commands::ReceiveByte( void )
 {
 	static char receivedByte;
@@ -60,6 +98,17 @@ bool Commands::ReceiveByte( void )
 					Serial.print( "\b \b" );
 				}
 				Commands::ClearCommandBuffer();
+				break;
+
+			case 'w':
+			case 'a':
+			case 's':
+			case 'd':
+			case 'h':
+			case 'j':
+			case 'k':
+			case 'l':
+				KeyboardApi( receivedByte );
 				break;
 
 			default:
