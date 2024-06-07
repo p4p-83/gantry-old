@@ -1,35 +1,27 @@
-[![alt text](images/Logo.png "Makeblock Logo") ](https://www.Makeblock.cc)
+# `gantry`
 
-The package consists of the software(Arduino firmware and GRemote), structure assembly instruction and program instruction.
+This gantry firmware was originally forked from [`Makeblock-official/XY-Plotter-2.0`](https://github.com/Makeblock-official/XY-Plotter-2.0), but has since been significantly re-written.
 
-###Brief Procedure
+It is presently in a half-finished, never-to-be-finished state---the decision is to re-write from scratch.
 
-1. Download and install Arduino-1.0.5，http://arduino.cc/en/Main/Software
+This documentation is written for posterity.
 
-2. Download the software package and decompress it，https://github.com/Makeblock-official/XY-Plotter-2.0/archive/master.zip
+## Usage
 
-3. Connect Me baseboard to computer with micro USB cable.
+- Use `w`, `a`, `s`, `d`, `h`, `j`, `k`, or `l` to step the gantry a fixed increment in the specified direction.
+- Use G-Code to provide a target location (`LF`-terminated!).
 
-4. Open GCodepraser->GCodeParser.ino by Arduino IDE. Click Tools->Serial Ports, choose COM XX (Not COM1 and COM2). Click Tools->Boards, choose Arduino Leonardo. At last, click "upload" button on the right-top corner.
-                                                                                  [![alt text](images/Upload.png "Upload program to Me Baseboard")](https://raw.githubusercontent.com/Makeblock-official/XY-Plotter-2.0/master/images/Upload.png)
+```sh
+G28 # go home
+G0 X10000 Y10000 Z0 # go to 10000um, 10000um, 0um
+G1 X10000 Y10000 Z0 # ''
+```
 
-5. Close Arduino IDE, open GRemoteFull->GRemote.bat. 
+## Known Issue(s)
 
-6. Set the COM port, then GRemote will show you the UI as follows. That all for this part.
-[![alt text](images/GRemote.jpg "Set the COM port")](https://raw.githubusercontent.com/Makeblock-official/XY-Plotter-2.0/master/images/GRemote.jpg)
+> [!warning]
+> This list does not claimed to be complete---it contains only the issues I can immediately recall
 
-7. Now, you could control the XY-Plotter 2.0 by mouse and keyboard. And, you can also run it with Gcode. You could generate Gcode file by another software (dxf2gcode(https://code.google.com/p/dxf2gcode/) or any other capable). You should save the Gcode file with .cnc and open it by GRemote.
-
-For more details, please refer to the software instruction.
-
-###How to DIY
-
-If you want change the source code, you could find it in GRemotFull/source/GRemote.pde.
-
-1. Download and install the Processing-2.1.2. http://processing.org/
-2. Install the Processing library, and controlP5 -- copy the whole folder to C:\Users\xxx\Documents\Processing\libraries
-3. Open the GRemote.pde by Processing, DIY the code and click the “run” button to test it.
-
-[![alt text](images/XY Plotter 2.0.jpg "Makeblock XY Plotter 2.0")](http://www.makeblock.cc/xy-plotter-robot-kit-2-0/)
-
-###Learn more from Makeblock official website: www.makeblock.com
+1. If a target position is provided that exceeds the working range, the limit switches are hit, and the current position written to that invalid position. All future operations then have some offset error. Said differently, there is no bounds checking.
+2. Feed rate `G1 F...` is not supported.
+3. Commands may be ignored if provided too quickly; ie if the present command is yet to complete. Said differently, there is no handshaking.
