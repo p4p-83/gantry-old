@@ -13,8 +13,8 @@
  */
 
 // Port 1
-#define WIRING_X_DIRECTION_PIN 10
-#define WIRING_X_STEP_PIN	   11
+#define WIRING_X_DIRECTION_PIN 3
+#define WIRING_X_STEP_PIN	   9
 
 // Port 6
 #define WIRING_X_LIMIT_MIN_PIN 13
@@ -27,12 +27,12 @@
  */
 
 // Port 2
-#define WIRING_Y_DIRECTION_PIN 3
-#define WIRING_Y_STEP_PIN	   9
+#define WIRING_Y_DIRECTION_PIN 10
+#define WIRING_Y_STEP_PIN	   11
 
 // Port 3
-#define WIRING_Y_LIMIT_MIN_PIN 17
-#define WIRING_Y_LIMIT_MAX_PIN 16
+#define WIRING_Y_LIMIT_MIN_PIN 2
+#define WIRING_Y_LIMIT_MAX_PIN 8
 
 #define WIRING_Y_ENABLE_PIN	   WIRING_UNUSED_PIN
 
