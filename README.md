@@ -20,7 +20,7 @@ G1 X10000 Y10000 Z0 # ''
 ## Known Issue(s)
 
 > [!warning]
-> This list does not claimed to be complete---it contains only the issues I can immediately recall
+> This list does not claim to be complete---it contains only the issues I can immediately recall.
 
 1. If a target position is provided that exceeds the working range, the limit switches are hit, and the current position written to that invalid position. All future operations then have some offset error. Said differently, there is no bounds checking.
 2. Feed rate `G1 F...` is not supported.
