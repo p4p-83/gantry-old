@@ -1,5 +1,8 @@
 # `gantry`
 
+> [!NOTE]
+> Refer to [`p4p.jamesnzl.xyz/learn`](https://p4p.jamesnzl.xyz/learn) for full details.
+
 This gantry firmware was originally forked from [`Makeblock-official/XY-Plotter-2.0`](https://github.com/Makeblock-official/XY-Plotter-2.0), but has since been significantly re-written.
 
 This repository contains the low-level machine control for our x-y stepper motors and limit switches for our pick-and-place machine.
