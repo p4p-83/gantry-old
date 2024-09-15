@@ -2,11 +2,9 @@
 
 This gantry firmware was originally forked from [`Makeblock-official/XY-Plotter-2.0`](https://github.com/Makeblock-official/XY-Plotter-2.0), but has since been significantly re-written.
 
-It is presently in a half-finished, never-to-be-finished state---the decision is to re-write from scratch.
-
-This documentation is written for posterity.
-
 ## Usage
+
+This repository is structured as a [PlatformIO](https://platformio.org/) project.
 
 - Use `w`, `a`, `s`, `d`, `h`, `j`, `k`, or `l` to step the gantry a fixed increment in the specified direction.
 - Use G-Code to provide a target location (`LF`-terminated!).
